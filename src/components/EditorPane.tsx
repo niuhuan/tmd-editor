@@ -74,8 +74,9 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
           minimap: { enabled: false },
           fontSize: 14,
           lineNumbers: 'on',
-          wordWrap: 'on',
+          wordWrap: 'off',  // Disable word wrap to avoid IME composition issues
           automaticLayout: true,
+          scrollBeyondLastLine: false,
         }}
       />
     </div>
