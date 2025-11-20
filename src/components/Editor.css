@@ -16,6 +16,13 @@
   color: #cccccc;
 }
 
+.editor-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .editor-placeholder {
   flex: 1;
   display: flex;

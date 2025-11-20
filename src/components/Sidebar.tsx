@@ -3,7 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { FileTree } from './FileTree';
 import { FileEntry } from '../types';
 import { useTheme } from '../theme';
@@ -11,9 +11,11 @@ import './Sidebar.css';
 
 interface SidebarProps {
   onFileClick?: (path: string) => void;
+  openFolderTrigger?: number;
+  showHiddenFiles?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onFileClick }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, showHiddenFiles = true }) => {
   const [rootPath, setRootPath] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
   const [selectedEntry, setSelectedEntry] = useState<FileEntry | null>(null);
@@ -21,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick }) => {
   const [isCreatingFile, setIsCreatingFile] = useState(false);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const { mode } = useTheme();
 
   useEffect(() => {
@@ -36,6 +39,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (openFolderTrigger !== undefined && openFolderTrigger > 0) {
+      handleOpenFolder();
+    }
+  }, [openFolderTrigger]);
 
   const handleOpenFolder = async () => {
     try {
@@ -77,6 +86,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick }) => {
       return;
     }
     setIsCreatingFolder(true);
+  };
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -144,12 +157,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick }) => {
   }
 
   return (
-    <div className={`sidebar ${mode}`}>
+    <div 
+      className={`sidebar ${mode}`}
+      onMouseEnter={() => setIsSidebarHovered(true)}
+      onMouseLeave={() => setIsSidebarHovered(false)}
+    >
       <div className={`sidebar-header ${mode}`}>
         <div className="sidebar-title" title={rootPath}>
           {folderName || 'EXPLORER'}
         </div>
-        <div className="sidebar-actions">
+        <div className={`sidebar-actions ${isSidebarHovered ? 'visible' : ''}`}>
+          <button
+            className={`action-btn ${mode}`}
+            onClick={handleRefresh}
+            title="Refresh Explorer"
+            disabled={!rootPath}
+          >
+            <RefreshIcon fontSize="small" />
+          </button>
           <button
             className={`action-btn ${mode}`}
             onClick={handleCreateFile}
@@ -205,6 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick }) => {
           selectedPath={selectedEntry?.path || null}
           onSelect={setSelectedEntry}
           refreshKey={refreshKey}
+          showHiddenFiles={showHiddenFiles}
         />
       </div>
     </div>

@@ -1,21 +1,61 @@
 import React from 'react';
+import { TabBar } from './TabBar';
+import { EditorPane } from './EditorPane';
+import { Settings, AppSettings } from './Settings';
+import { OpenFile } from '../types';
 import { useTheme } from '../theme';
 import './Editor.css';
 
 interface EditorProps {
-  selectedFile?: string;
+  openFiles: OpenFile[];
+  activeFile: string | null;
+  showSettings: boolean;
+  settings: AppSettings;
+  onTabClick: (path: string) => void;
+  onTabClose: (path: string) => void;
+  onContentChange: (path: string, content: string) => void;
+  onSettingsChange: (settings: AppSettings) => void;
+  onCloseSettings: () => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ selectedFile }) => {
+export const Editor: React.FC<EditorProps> = ({ 
+  openFiles, 
+  activeFile, 
+  showSettings,
+  settings,
+  onTabClick, 
+  onTabClose,
+  onContentChange,
+  onSettingsChange,
+  onCloseSettings
+}) => {
   const { mode } = useTheme();
+
+  const activeFileData = openFiles.find(f => f.path === activeFile);
 
   return (
     <div className={`editor ${mode}`}>
-      {selectedFile ? (
-        <div className={`editor-placeholder ${mode}`}>
-          <h2>Editor Coming Soon</h2>
-          <p>Selected file: {selectedFile}</p>
-          <p>The markdown editor will be implemented here.</p>
+      <TabBar 
+        openFiles={openFiles}
+        activeFile={activeFile}
+        showSettings={showSettings}
+        onTabClick={onTabClick}
+        onTabClose={onTabClose}
+        onCloseSettings={onCloseSettings}
+      />
+      {showSettings ? (
+        <div className="editor-content">
+          <Settings 
+            settings={settings}
+            onSettingsChange={onSettingsChange}
+          />
+        </div>
+      ) : activeFileData ? (
+        <div className="editor-content">
+          <EditorPane 
+            file={activeFileData}
+            onContentChange={onContentChange}
+          />
         </div>
       ) : (
         <div className={`editor-placeholder ${mode}`}>

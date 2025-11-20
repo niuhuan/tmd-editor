@@ -1,0 +1,130 @@
+.tab-bar {
+  display: flex;
+  height: 35px;
+  border-bottom: 1px solid;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+}
+
+.tab-bar.light {
+  background-color: #f3f3f3;
+  border-bottom-color: #e5e5e5;
+}
+
+.tab-bar.dark {
+  background-color: #2d2d2d;
+  border-bottom-color: #3e3e42;
+}
+
+.tab-bar::-webkit-scrollbar {
+  height: 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  min-width: 120px;
+  max-width: 200px;
+  cursor: pointer;
+  border-right: 1px solid;
+  user-select: none;
+  position: relative;
+}
+
+.tab.light {
+  background-color: #ececec;
+  border-right-color: #e5e5e5;
+  color: #616161;
+}
+
+.tab.dark {
+  background-color: #2d2d2d;
+  border-right-color: #3e3e42;
+  color: #858585;
+}
+
+.tab.light.active {
+  background-color: #ffffff;
+  color: #333333;
+  border-bottom: 2px solid #007acc;
+}
+
+.tab.dark.active {
+  background-color: #1e1e1e;
+  color: #cccccc;
+  border-bottom: 2px solid #007acc;
+}
+
+.tab.light:hover:not(.active) {
+  background-color: #e0e0e0;
+}
+
+.tab.dark:hover:not(.active) {
+  background-color: #37373d;
+}
+
+.tab-icon {
+  flex-shrink: 0;
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+.tab-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tab.settings-tab {
+  cursor: default;
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.tab:hover .tab-close {
+  opacity: 0.6;
+}
+
+.tab-close:hover {
+  opacity: 1 !important;
+}
+
+.tab-close.light {
+  color: #616161;
+}
+
+.tab-close.dark {
+  color: #858585;
+}
+
+.tab-close.light:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.tab-close.dark:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tab-close svg {
+  font-size: 16px;
+}
+

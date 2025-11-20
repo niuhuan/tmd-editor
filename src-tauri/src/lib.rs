@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use tauri::{Manager, Emitter};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct FileEntry {
@@ -17,8 +18,9 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-async fn read_directory(path: String) -> Result<Vec<FileEntry>, String> {
+async fn read_directory(path: String, show_hidden: Option<bool>) -> Result<Vec<FileEntry>, String> {
     let dir_path = PathBuf::from(&path);
+    let show_hidden = show_hidden.unwrap_or(true); // Default to true
     
     if !dir_path.exists() {
         return Err("Directory does not exist".to_string());
@@ -46,8 +48,8 @@ async fn read_directory(path: String) -> Result<Vec<FileEntry>, String> {
                             Err(_) => continue,
                         };
                         
-                        // Skip hidden files on Unix-like systems
-                        if name.starts_with('.') {
+                        // Skip hidden files if show_hidden is false
+                        if !show_hidden && name.starts_with('.') {
                             continue;
                         }
                         
@@ -103,9 +105,80 @@ async fn create_directory(path: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[allow(unused_imports)]
+    use tauri::menu::{PredefinedMenuItem};
+    use tauri::menu::{Menu, MenuItemBuilder, SubmenuBuilder};
+    
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Create menu items
+            let open_folder = MenuItemBuilder::with_id("open-folder", "Open Folder...")
+                .accelerator("CmdOrCtrl+O")
+                .build(app)?;
+            
+            let settings_item = MenuItemBuilder::with_id("settings", "Settings...")
+                .accelerator("CmdOrCtrl+,")
+                .build(app)?;
+            
+            // Build File submenu
+            #[allow(unused_mut)]
+            let mut file_menu_builder = SubmenuBuilder::new(app, "File")
+                .item(&open_folder);
+            
+            // On Windows and Linux, add Settings and Exit in File menu
+            #[cfg(not(target_os = "macos"))]
+            {
+                file_menu_builder = file_menu_builder
+                    .separator()
+                    .item(&settings_item)
+                    .separator();
+                
+                let quit_item = PredefinedMenuItem::quit(app, Some("Exit"))?;
+                file_menu_builder = file_menu_builder.item(&quit_item);
+            }
+            
+            let file_menu = file_menu_builder.build()?;
+            
+            // Create main menu
+            let menu = Menu::new(app)?;
+            
+            // On macOS, add app menu with Preferences and Quit
+            #[cfg(target_os = "macos")]
+            {
+                let app_menu = SubmenuBuilder::new(app, "TMD Editor")
+                    .separator()
+                    .item(&settings_item)
+                    .separator()
+                    .quit()
+                    .build()?;
+                menu.append(&app_menu)?;
+            }
+            
+            // Add File menu
+            menu.append(&file_menu)?;
+            
+            app.set_menu(menu)?;
+            
+            // Handle menu events
+            app.on_menu_event(move |app, event| {
+                let event_id = event.id().as_ref();
+                if let Some(window) = app.get_webview_window("main") {
+                    match event_id {
+                        "open-folder" => {
+                            let _ = window.emit("menu-open-folder", ());
+                        }
+                        "settings" => {
+                            let _ = window.emit("menu-settings", ());
+                        }
+                        _ => {}
+                    }
+                }
+            });
+            
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             greet,
             read_directory,

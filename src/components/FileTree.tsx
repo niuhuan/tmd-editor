@@ -15,20 +15,25 @@ interface FileTreeNodeProps {
   onFileClick?: (path: string) => void;
   selectedPath?: string | null;
   onSelect?: (entry: FileEntry) => void;
+  refreshKey?: number;
+  showHiddenFiles?: boolean;
 }
 
-const FileTreeNode: React.FC<FileTreeNodeProps> = ({ entry, level, onFileClick, selectedPath, onSelect }) => {
+const FileTreeNode: React.FC<FileTreeNodeProps> = ({ entry, level, onFileClick, selectedPath, onSelect, refreshKey, showHiddenFiles = true }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [children, setChildren] = useState<FileEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { mode } = useTheme();
 
-  const loadChildren = async () => {
+  const loadChildren = async (showHidden: boolean) => {
     if (!entry.is_directory || isLoading) return;
     
     setIsLoading(true);
     try {
-      const result = await invoke<FileEntry[]>('read_directory', { path: entry.path });
+      const result = await invoke<FileEntry[]>('read_directory', { 
+        path: entry.path,
+        showHidden
+      });
       setChildren(result);
     } catch (error) {
       console.error('Failed to read directory:', error);
@@ -38,6 +43,13 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ entry, level, onFileClick, 
     }
   };
 
+  // Reload children when refreshKey or showHiddenFiles changes and directory is expanded
+  useEffect(() => {
+    if (isExpanded && entry.is_directory) {
+      loadChildren(showHiddenFiles);
+    }
+  }, [refreshKey, showHiddenFiles]);
+
   const handleClick = async () => {
     // Always select the item first
     if (onSelect) {
@@ -46,7 +58,7 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ entry, level, onFileClick, 
     
     if (entry.is_directory) {
       if (!isExpanded && children.length === 0) {
-        await loadChildren();
+        await loadChildren(showHiddenFiles);
       }
       setIsExpanded(!isExpanded);
     } else if (entry.is_file && onFileClick) {
@@ -87,6 +99,8 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ entry, level, onFileClick, 
               onFileClick={onFileClick}
               selectedPath={selectedPath}
               onSelect={onSelect}
+              refreshKey={refreshKey}
+              showHiddenFiles={showHiddenFiles}
             />
           ))}
         </div>
@@ -101,9 +115,10 @@ interface FileTreeProps {
   selectedPath?: string | null;
   onSelect?: (entry: FileEntry) => void;
   refreshKey?: number;
+  showHiddenFiles?: boolean;
 }
 
-export const FileTree: React.FC<FileTreeProps> = ({ rootPath, onFileClick, selectedPath, onSelect, refreshKey }) => {
+export const FileTree: React.FC<FileTreeProps> = ({ rootPath, onFileClick, selectedPath, onSelect, refreshKey, showHiddenFiles = true }) => {
   const [rootEntries, setRootEntries] = useState<FileEntry[]>([]);
   const { mode } = useTheme();
 
@@ -111,13 +126,16 @@ export const FileTree: React.FC<FileTreeProps> = ({ rootPath, onFileClick, selec
     if (rootPath) {
       loadRootDirectory();
     }
-  }, [rootPath, refreshKey]);
+  }, [rootPath, refreshKey, showHiddenFiles]);
 
   const loadRootDirectory = async () => {
     if (!rootPath) return;
     
     try {
-      const result = await invoke<FileEntry[]>('read_directory', { path: rootPath });
+      const result = await invoke<FileEntry[]>('read_directory', { 
+        path: rootPath,
+        showHidden: showHiddenFiles
+      });
       setRootEntries(result);
     } catch (error) {
       console.error('Failed to read root directory:', error);
@@ -139,6 +157,8 @@ export const FileTree: React.FC<FileTreeProps> = ({ rootPath, onFileClick, selec
           onFileClick={onFileClick}
           selectedPath={selectedPath}
           onSelect={onSelect}
+          refreshKey={refreshKey}
+          showHiddenFiles={showHiddenFiles}
         />
       ))}
     </div>

@@ -5,3 +5,10 @@ export interface FileEntry {
   is_file: boolean;
 }
 
+export interface OpenFile {
+  path: string;
+  name: string;
+  content: string;
+  type: 'txt' | 'markdown' | 'unsupported';
+  isUnsupported?: boolean;
+}

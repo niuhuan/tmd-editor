@@ -9,7 +9,11 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useTheme } from '../theme';
 import './ActivityBar.css';
 
-export const ActivityBar: React.FC = () => {
+interface ActivityBarProps {
+  onSettingsClick?: () => void;
+}
+
+export const ActivityBar: React.FC<ActivityBarProps> = ({ onSettingsClick }) => {
   const { mode, toggleTheme } = useTheme();
 
   return (
@@ -36,7 +40,11 @@ export const ActivityBar: React.FC = () => {
         >
           {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
         </div>
-        <div className={`activity-bar-item ${mode}`} title="Settings">
+        <div 
+          className={`activity-bar-item ${mode}`} 
+          title="Settings"
+          onClick={onSettingsClick}
+        >
           <SettingsIcon />
         </div>
       </div>
