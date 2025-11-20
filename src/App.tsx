@@ -1,28 +1,26 @@
 import { useState, useEffect } from "react";
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
-import { ThemeContext, ThemeMode, lightTheme, darkTheme } from "./theme";
+import { ThemeContext, lightTheme, darkTheme } from "./theme";
 import { ActivityBar } from "./components/ActivityBar";
 import { Sidebar } from "./components/Sidebar";
 import { Editor } from "./components/Editor";
 import { StatusBar } from "./components/StatusBar";
 import { AppSettings } from "./components/Settings";
 import { OpenFile } from "./types";
+import { usePersistedSettings } from "./hooks/useSettings";
 import "./App.css";
 
 function App() {
-  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const { theme: themeMode, appSettings: settings, isLoaded, setTheme, setAppSettings } = usePersistedSettings();
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [openFolderTrigger, setOpenFolderTrigger] = useState<number>(0);
   const [openFileTrigger, setOpenFileTrigger] = useState<number>(0);
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [settings, setSettings] = useState<AppSettings>({
-    showHiddenFiles: true, // Default to true
-  });
 
   const toggleTheme = () => {
-    setThemeMode(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme(themeMode === 'light' ? 'dark' : 'light');
   };
 
   const getFileType = (filename: string): 'txt' | 'markdown' | 'unsupported' => {
@@ -114,7 +112,7 @@ function App() {
   };
 
   const handleSettingsChange = (newSettings: AppSettings) => {
-    setSettings(newSettings);
+    setAppSettings(newSettings);
   };
 
   // Listen for menu events
@@ -139,6 +137,11 @@ function App() {
   }, []);
 
   const theme = themeMode === 'light' ? lightTheme : darkTheme;
+
+  // Don't render until settings are loaded
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={{ mode: themeMode, toggleTheme }}>

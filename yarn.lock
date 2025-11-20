@@ -1952,6 +1952,13 @@
   dependencies:
     "@tauri-apps/api" "^2.8.0"
 
+"@tauri-apps/plugin-store@^2.4.1":
+  version "2.4.1"
+  resolved "https://registry.npmmirror.com/@tauri-apps/plugin-store/-/plugin-store-2.4.1.tgz#5e2d3362e41861d2fa79a3f1a78c091e12963236"
+  integrity sha512-ckGSEzZ5Ii4Hf2D5x25Oqnm2Zf9MfDWAzR+volY0z/OOBz6aucPKEY0F649JvQ0Vupku6UJo7ugpGRDOFOunkA==
+  dependencies:
+    "@tauri-apps/api" "^2.8.0"
+
 "@types/babel__core@^7.20.5":
   version "7.20.5"
   resolved "https://registry.npmmirror.com/@types/babel__core/-/babel__core-7.20.5.tgz#3df15f27ba85319caa07ba08d0721889bb39c017"
