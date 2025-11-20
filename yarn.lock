@@ -2321,6 +2321,11 @@ downshift@^7.6.0:
     react-is "^17.0.2"
     tslib "^2.3.0"
 
+editor.md@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.npmmirror.com/editor.md/-/editor.md-1.5.0.tgz#6fe636a88a39b85613f53eee6ecb7b7348ab23bf"
+  integrity sha512-oQBKZdXTkGogGNXV5jomogXZ2v8FNPBDbTC0NOVkicypPGr+NLKeEBfAe/gujCivkDG4Tn5yAGHCr0tsp9o44Q==
+
 electron-to-chromium@^1.5.249:
   version "1.5.258"
   resolved "https://registry.npmmirror.com/electron-to-chromium/-/electron-to-chromium-1.5.258.tgz#094b0280928b1bf967b202e4be5b335aa4754b69"
@@ -2634,6 +2639,11 @@ marked@14.0.0:
   version "14.0.0"
   resolved "https://registry.npmmirror.com/marked/-/marked-14.0.0.tgz#79a1477358a59e0660276f8fec76de2c33f35d83"
   integrity sha512-uIj4+faQ+MgHgwUW1l2PsPglZLOLOT1uErt06dAPtx2kjteLAkbsd/0FiYg/MGS+i7ZKLb7w2WClxHkzOOuryQ==
+
+marked@^17.0.0:
+  version "17.0.0"
+  resolved "https://registry.npmmirror.com/marked/-/marked-17.0.0.tgz#62ae3f2ea8346025ae24a24ad4b78982655ef4e3"
+  integrity sha512-KkDYEWEEiYJw/KC+DVm1zzlpMQSMIu6YRltkcCvwheCp8HWPXCk9JwOmHJKBlGfzcpzcIt6x3sMnTsRm/51oDg==
 
 mdast-util-directive@^3.0.0:
   version "3.1.0"

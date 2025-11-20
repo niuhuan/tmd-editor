@@ -176,8 +176,28 @@ function App() {
   const handleMarkdownViewModeToggle = (path: string) => {
     setOpenFiles(prev => prev.map(f => {
       if (f.path === path && f.type === 'markdown') {
-        const newMode = f.markdownViewMode === 'rich' ? 'source' : 'rich';
+        // Cycle through modes: source -> split -> rich -> source
+        const currentMode = f.markdownViewMode || 'source';
+        let newMode: 'rich' | 'source' | 'split';
+        
+        if (currentMode === 'source') {
+          newMode = 'split';
+        } else if (currentMode === 'split') {
+          newMode = 'rich';
+        } else {
+          newMode = 'source';
+        }
+        
         return { ...f, markdownViewMode: newMode };
+      }
+      return f;
+    }));
+  };
+
+  const handleMarkdownViewModeChange = (path: string, mode: 'rich' | 'source' | 'split') => {
+    setOpenFiles(prev => prev.map(f => {
+      if (f.path === path && f.type === 'markdown') {
+        return { ...f, markdownViewMode: mode };
       }
       return f;
     }));
@@ -266,6 +286,7 @@ function App() {
               onSettingsChange={handleSettingsChange}
               onCloseSettings={handleCloseSettings}
               onMarkdownViewModeToggle={handleMarkdownViewModeToggle}
+              onMarkdownViewModeChange={handleMarkdownViewModeChange}
             />
           </div>
         </div>

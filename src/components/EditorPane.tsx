@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
+import type { editor as MonacoEditor } from 'monaco-editor';
+import { marked } from 'marked';
 import { 
   MDXEditor, 
   headingsPlugin, 
@@ -37,6 +39,10 @@ interface EditorPaneProps {
 
 export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange }) => {
   const { mode } = useTheme();
+  const [previewHtml, setPreviewHtml] = useState<string>('');
+  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
+  const isScrollingRef = useRef<{ editor: boolean; preview: boolean }>({ editor: false, preview: false });
 
   const handleMonacoChange = (value: string | undefined) => {
     if (value !== undefined) {
@@ -47,6 +53,102 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
   const handleMarkdownChange = (value: string) => {
     onContentChange(file.path, value);
   };
+
+  // Update preview HTML when content changes in split mode
+  useEffect(() => {
+    if (file.type === 'markdown' && file.markdownViewMode === 'split') {
+      const html = marked.parse(file.content);
+      setPreviewHtml(html as string);
+    }
+  }, [file.content, file.type, file.markdownViewMode]);
+
+  // Setup scroll synchronization for split view
+  useEffect(() => {
+    if (file.type !== 'markdown' || file.markdownViewMode !== 'split') {
+      return;
+    }
+
+    let editorScrollDisposable: any = null;
+    let previewScrollHandler: ((e: Event) => void) | null = null;
+
+    // Wait for both editor and preview to be ready, and for DOM to update
+    const timer = setTimeout(() => {
+      const editor = editorRef.current;
+      const preview = previewRef.current;
+
+      if (!editor || !preview) {
+        return;
+      }
+
+      // Sync preview scroll when editor scrolls
+      editorScrollDisposable = editor.onDidScrollChange((e) => {
+        if (isScrollingRef.current.preview) return;
+        
+        isScrollingRef.current.editor = true;
+        
+        const scrollTop = e.scrollTop;
+        const scrollHeight = editor.getScrollHeight();
+        const clientHeight = editor.getLayoutInfo().height;
+        
+        const maxScroll = scrollHeight - clientHeight;
+        if (maxScroll <= 0) {
+          isScrollingRef.current.editor = false;
+          return;
+        }
+        
+        const scrollPercentage = scrollTop / maxScroll;
+        
+        const previewMaxScroll = preview.scrollHeight - preview.clientHeight;
+        if (previewMaxScroll > 0) {
+          preview.scrollTop = scrollPercentage * previewMaxScroll;
+        }
+        
+        setTimeout(() => {
+          isScrollingRef.current.editor = false;
+        }, 100);
+      });
+
+      // Sync editor scroll when preview scrolls
+      previewScrollHandler = () => {
+        if (isScrollingRef.current.editor) return;
+        
+        isScrollingRef.current.preview = true;
+        
+        const scrollTop = preview.scrollTop;
+        const scrollHeight = preview.scrollHeight;
+        const clientHeight = preview.clientHeight;
+        
+        const maxScroll = scrollHeight - clientHeight;
+        if (maxScroll <= 0) {
+          isScrollingRef.current.preview = false;
+          return;
+        }
+        
+        const scrollPercentage = scrollTop / maxScroll;
+        
+        const editorMaxScroll = editor.getScrollHeight() - editor.getLayoutInfo().height;
+        if (editorMaxScroll > 0) {
+          editor.setScrollTop(scrollPercentage * editorMaxScroll);
+        }
+        
+        setTimeout(() => {
+          isScrollingRef.current.preview = false;
+        }, 100);
+      };
+
+      preview.addEventListener('scroll', previewScrollHandler);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (editorScrollDisposable) {
+        editorScrollDisposable.dispose();
+      }
+      if (previewScrollHandler && previewRef.current) {
+        previewRef.current.removeEventListener('scroll', previewScrollHandler);
+      }
+    };
+  }, [file.type, file.markdownViewMode, previewHtml]);
 
   // Image upload handler - for now, just use the provided URL/path directly
   const imageUploadHandler = async (image: File): Promise<string> => {
@@ -94,6 +196,43 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
               scrollBeyondLastLine: false,
             }}
           />
+        </div>
+      );
+    }
+    
+    if (viewMode === 'split') {
+      // Show split view: editor on left, preview on right
+      return (
+        <div className={`editor-pane split-view ${mode}`}>
+          <div className="split-editor">
+            <Editor
+              height="100%"
+              defaultLanguage="markdown"
+              value={file.content}
+              onChange={handleMonacoChange}
+              onMount={(editor) => {
+                editorRef.current = editor;
+              }}
+              theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                wordWrap: 'off',
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+              }}
+            />
+          </div>
+          <div 
+            ref={previewRef}
+            className={`split-preview ${mode}`}
+          >
+            <div 
+              className="markdown-preview-content"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          </div>
         </div>
       );
     }

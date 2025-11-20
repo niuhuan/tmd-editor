@@ -3,7 +3,7 @@ import { useTheme } from '../theme';
 import './Settings.css';
 
 export type AutoSaveMode = 'off' | 'afterDelay';
-export type MarkdownViewMode = 'rich' | 'source';
+export type MarkdownViewMode = 'rich' | 'source' | 'split';
 
 export interface AppSettings {
   showHiddenFiles: boolean;
@@ -138,7 +138,8 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange }
                 onChange={handleMarkdownDefaultModeChange}
               >
                 <option value="source">Source Code</option>
-                <option value="rich">Rich Preview</option>
+                <option value="split">Split Preview</option>
+                <option value="rich">Rich Editor</option>
               </select>
             </div>
           </div>

@@ -1,8 +1,9 @@
 import React from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import PreviewIcon from '@mui/icons-material/Preview';
+import CodeIcon from '@mui/icons-material/Code';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ViewSidebarIcon from '@mui/icons-material/ViewSidebar';
 import { OpenFile } from '../types';
 import { useTheme } from '../theme';
 import './TabBar.css';
@@ -17,6 +18,7 @@ interface TabBarProps {
   onTabClose: (path: string) => void;
   onCloseSettings: () => void;
   onMarkdownViewModeToggle?: (path: string) => void;
+  onMarkdownViewModeChange?: (path: string, mode: 'rich' | 'source' | 'split') => void;
 }
 
 export const TabBar: React.FC<TabBarProps> = ({ 
@@ -28,7 +30,7 @@ export const TabBar: React.FC<TabBarProps> = ({
   onTabClick, 
   onTabClose,
   onCloseSettings,
-  onMarkdownViewModeToggle
+  onMarkdownViewModeChange
 }) => {
   const { mode } = useTheme();
 
@@ -42,10 +44,10 @@ export const TabBar: React.FC<TabBarProps> = ({
     onCloseSettings();
   };
 
-  const handleViewModeToggle = (e: React.MouseEvent) => {
+  const handleViewModeChange = (e: React.MouseEvent, newMode: 'rich' | 'source' | 'split') => {
     e.stopPropagation();
-    if (activeFile && onMarkdownViewModeToggle) {
-      onMarkdownViewModeToggle(activeFile);
+    if (activeFile && onMarkdownViewModeChange) {
+      onMarkdownViewModeChange(activeFile, newMode);
     }
   };
 
@@ -107,15 +109,25 @@ export const TabBar: React.FC<TabBarProps> = ({
       {showMarkdownToggle && (
         <div className={`markdown-view-toggle ${mode}`}>
           <button
-            className={`view-mode-button ${mode} ${activeFileData?.markdownViewMode === 'rich' ? 'active' : ''}`}
-            onClick={handleViewModeToggle}
-            title={activeFileData?.markdownViewMode === 'rich' ? 'Switch to Source' : 'Switch to Preview'}
+            className={`view-mode-button ${mode} ${activeFileData?.markdownViewMode === 'source' ? 'active' : ''}`}
+            onClick={(e) => handleViewModeChange(e, 'source')}
+            title="Source Code"
           >
-            {activeFileData?.markdownViewMode === 'rich' ? (
-              <DescriptionOutlinedIcon fontSize="small" />
-            ) : (
-              <PreviewIcon fontSize="small" />
-            )}
+            <CodeIcon fontSize="small" />
+          </button>
+          <button
+            className={`view-mode-button ${mode} ${activeFileData?.markdownViewMode === 'split' ? 'active' : ''}`}
+            onClick={(e) => handleViewModeChange(e, 'split')}
+            title="Split Preview"
+          >
+            <ViewSidebarIcon fontSize="small" />
+          </button>
+          <button
+            className={`view-mode-button ${mode} ${activeFileData?.markdownViewMode === 'rich' ? 'active' : ''}`}
+            onClick={(e) => handleViewModeChange(e, 'rich')}
+            title="Rich Editor"
+          >
+            <VisibilityIcon fontSize="small" />
           </button>
         </div>
       )}

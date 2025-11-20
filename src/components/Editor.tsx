@@ -17,6 +17,7 @@ interface EditorProps {
   onSettingsChange: (settings: AppSettings) => void;
   onCloseSettings: () => void;
   onMarkdownViewModeToggle: (path: string) => void;
+  onMarkdownViewModeChange: (path: string, mode: 'rich' | 'source' | 'split') => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({ 
@@ -29,7 +30,8 @@ export const Editor: React.FC<EditorProps> = ({
   onContentChange,
   onSettingsChange,
   onCloseSettings,
-  onMarkdownViewModeToggle
+  onMarkdownViewModeToggle,
+  onMarkdownViewModeChange
 }) => {
   const { mode } = useTheme();
 
@@ -47,6 +49,7 @@ export const Editor: React.FC<EditorProps> = ({
         onTabClose={onTabClose}
         onCloseSettings={onCloseSettings}
         onMarkdownViewModeToggle={onMarkdownViewModeToggle}
+        onMarkdownViewModeChange={onMarkdownViewModeChange}
       />
       {showSettings ? (
         <div className="editor-content">
