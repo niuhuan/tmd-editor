@@ -60,6 +60,7 @@ function App() {
         type: fileType,
         isUnsupported: fileType === 'unsupported',
         isDirty: false,
+        markdownViewMode: fileType === 'markdown' ? settings.markdownDefaultMode : undefined,
       };
 
       // If opening an unsupported file, close any existing unsupported file
@@ -172,6 +173,16 @@ function App() {
     setShowSettings(false);
   };
 
+  const handleMarkdownViewModeToggle = (path: string) => {
+    setOpenFiles(prev => prev.map(f => {
+      if (f.path === path && f.type === 'markdown') {
+        const newMode = f.markdownViewMode === 'rich' ? 'source' : 'rich';
+        return { ...f, markdownViewMode: newMode };
+      }
+      return f;
+    }));
+  };
+
   const handleSettingsChange = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
   };
@@ -254,10 +265,11 @@ function App() {
               onContentChange={handleContentChange}
               onSettingsChange={handleSettingsChange}
               onCloseSettings={handleCloseSettings}
+              onMarkdownViewModeToggle={handleMarkdownViewModeToggle}
             />
           </div>
         </div>
-        <StatusBar />
+        <StatusBar activeFile={openFiles.find(f => f.path === activeFile) || null} />
       </div>
     </ThemeContext.Provider>
   );

@@ -3,11 +3,13 @@ import { useTheme } from '../theme';
 import './Settings.css';
 
 export type AutoSaveMode = 'off' | 'afterDelay';
+export type MarkdownViewMode = 'rich' | 'source';
 
 export interface AppSettings {
   showHiddenFiles: boolean;
   autoSave: AutoSaveMode;
   autoSaveDelay: number;
+  markdownDefaultMode: MarkdownViewMode;
 }
 
 interface SettingsProps {
@@ -40,6 +42,13 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange }
         autoSaveDelay: delay,
       });
     }
+  };
+
+  const handleMarkdownDefaultModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onSettingsChange({
+      ...settings,
+      markdownDefaultMode: e.target.value as MarkdownViewMode,
+    });
   };
 
   return (
@@ -108,6 +117,29 @@ export const Settings: React.FC<SettingsProps> = ({ settings, onSettingsChange }
                 />
                 <span className={`slider ${mode}`}></span>
               </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h2>Editor</h2>
+          
+          <div className="setting-item">
+            <div className="setting-label">
+              <div className="setting-title">Markdown Default Mode</div>
+              <div className="setting-description">
+                Default view mode when opening Markdown files
+              </div>
+            </div>
+            <div className="setting-control">
+              <select 
+                className={`setting-select ${mode}`}
+                value={settings.markdownDefaultMode}
+                onChange={handleMarkdownDefaultModeChange}
+              >
+                <option value="source">Source Code</option>
+                <option value="rich">Rich Preview</option>
+              </select>
             </div>
           </div>
         </div>

@@ -13,4 +13,5 @@ export interface OpenFile {
   type: 'txt' | 'markdown' | 'unsupported';
   isUnsupported?: boolean;
   isDirty?: boolean;  // Has unsaved changes
+  markdownViewMode?: 'rich' | 'source';  // Markdown view mode
 }

@@ -37,6 +37,32 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
   }
 
   if (file.type === 'markdown') {
+    const viewMode = file.markdownViewMode || 'rich';
+    
+    if (viewMode === 'source') {
+      // Show source code in Monaco Editor
+      return (
+        <div className={`editor-pane monaco ${mode}`}>
+          <Editor
+            height="100%"
+            defaultLanguage="markdown"
+            value={file.content}
+            onChange={handleMonacoChange}
+            theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineNumbers: 'on',
+              wordWrap: 'off',
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+            }}
+          />
+        </div>
+      );
+    }
+    
+    // Show rich editor
     return (
       <div className={`editor-pane markdown ${mode}`}>
         <MDXEditor

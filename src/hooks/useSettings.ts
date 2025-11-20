@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Store } from '@tauri-apps/plugin-store';
 import { ThemeMode } from '../theme';
-import { AppSettings, AutoSaveMode } from '../components/Settings';
+import { AppSettings, AutoSaveMode, MarkdownViewMode } from '../components/Settings';
 
 interface StoredSettings {
   theme: ThemeMode;
   showHiddenFiles: boolean;
   autoSave: AutoSaveMode;
   autoSaveDelay: number;
+  markdownDefaultMode: MarkdownViewMode;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: StoredSettings = {
   showHiddenFiles: true,
   autoSave: 'afterDelay',  // Default to auto save
   autoSaveDelay: 100,  // Fast auto save
+  markdownDefaultMode: 'source',  // Default to source mode
 };
 
 let store: Store | null = null;
@@ -32,6 +34,7 @@ export function usePersistedSettings() {
     showHiddenFiles: DEFAULT_SETTINGS.showHiddenFiles,
     autoSave: DEFAULT_SETTINGS.autoSave,
     autoSaveDelay: DEFAULT_SETTINGS.autoSaveDelay,
+    markdownDefaultMode: DEFAULT_SETTINGS.markdownDefaultMode,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -48,6 +51,7 @@ export function usePersistedSettings() {
       const savedShowHiddenFiles = await storeInstance.get<boolean>('showHiddenFiles');
       const savedAutoSave = await storeInstance.get<AutoSaveMode>('autoSave');
       const savedAutoSaveDelay = await storeInstance.get<number>('autoSaveDelay');
+      const savedMarkdownDefaultMode = await storeInstance.get<MarkdownViewMode>('markdownDefaultMode');
 
       if (savedTheme) {
         setTheme(savedTheme);
@@ -58,6 +62,7 @@ export function usePersistedSettings() {
         showHiddenFiles: savedShowHiddenFiles ?? prev.showHiddenFiles,
         autoSave: savedAutoSave ?? prev.autoSave,
         autoSaveDelay: savedAutoSaveDelay ?? prev.autoSaveDelay,
+        markdownDefaultMode: savedMarkdownDefaultMode ?? prev.markdownDefaultMode,
       }));
 
       setIsLoaded(true);
@@ -85,6 +90,7 @@ export function usePersistedSettings() {
       await storeInstance.set('showHiddenFiles', newSettings.showHiddenFiles);
       await storeInstance.set('autoSave', newSettings.autoSave);
       await storeInstance.set('autoSaveDelay', newSettings.autoSaveDelay);
+      await storeInstance.set('markdownDefaultMode', newSettings.markdownDefaultMode);
       await storeInstance.save();
     } catch (error) {
       console.error('Failed to save app settings:', error);

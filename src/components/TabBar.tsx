@@ -1,6 +1,8 @@
 import React from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import PreviewIcon from '@mui/icons-material/Preview';
 import { OpenFile } from '../types';
 import { useTheme } from '../theme';
 import './TabBar.css';
@@ -14,6 +16,7 @@ interface TabBarProps {
   onTabClick: (path: string) => void;
   onTabClose: (path: string) => void;
   onCloseSettings: () => void;
+  onMarkdownViewModeToggle?: (path: string) => void;
 }
 
 export const TabBar: React.FC<TabBarProps> = ({ 
@@ -24,7 +27,8 @@ export const TabBar: React.FC<TabBarProps> = ({
   autoSaveDelay,
   onTabClick, 
   onTabClose,
-  onCloseSettings
+  onCloseSettings,
+  onMarkdownViewModeToggle
 }) => {
   const { mode } = useTheme();
 
@@ -36,6 +40,13 @@ export const TabBar: React.FC<TabBarProps> = ({
   const handleCloseSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
     onCloseSettings();
+  };
+
+  const handleViewModeToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (activeFile && onMarkdownViewModeToggle) {
+      onMarkdownViewModeToggle(activeFile);
+    }
   };
 
   // Determine if we should show dirty indicator
@@ -50,8 +61,12 @@ export const TabBar: React.FC<TabBarProps> = ({
     return null;
   }
 
+  const activeFileData = openFiles.find(f => f.path === activeFile);
+  const showMarkdownToggle = !showSettings && activeFileData?.type === 'markdown';
+
   return (
-    <div className={`tab-bar ${mode}`}>
+    <div className={`tab-bar-container ${mode}`}>
+      <div className={`tab-bar ${mode}`}>
       {showSettings && (
         <div
           className={`tab ${mode} settings-tab active`}
@@ -87,6 +102,23 @@ export const TabBar: React.FC<TabBarProps> = ({
           </div>
         );
       })}
+      </div>
+      
+      {showMarkdownToggle && (
+        <div className={`markdown-view-toggle ${mode}`}>
+          <button
+            className={`view-mode-button ${mode} ${activeFileData?.markdownViewMode === 'rich' ? 'active' : ''}`}
+            onClick={handleViewModeToggle}
+            title={activeFileData?.markdownViewMode === 'rich' ? 'Switch to Source' : 'Switch to Preview'}
+          >
+            {activeFileData?.markdownViewMode === 'rich' ? (
+              <DescriptionOutlinedIcon fontSize="small" />
+            ) : (
+              <PreviewIcon fontSize="small" />
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

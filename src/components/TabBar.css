@@ -1,20 +1,33 @@
-.tab-bar {
+.tab-bar-container {
   display: flex;
   height: 35px;
   border-bottom: 1px solid;
-  overflow-x: auto;
-  overflow-y: hidden;
   flex-shrink: 0;
 }
 
-.tab-bar.light {
+.tab-bar-container.light {
   background-color: #f3f3f3;
   border-bottom-color: #e5e5e5;
 }
 
-.tab-bar.dark {
+.tab-bar-container.dark {
   background-color: #2d2d2d;
   border-bottom-color: #3e3e42;
+}
+
+.tab-bar {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tab-bar.light {
+  background-color: #f3f3f3;
+}
+
+.tab-bar.dark {
+  background-color: #2d2d2d;
 }
 
 .tab-bar::-webkit-scrollbar {
@@ -162,5 +175,55 @@
 
 .tab-close svg {
   font-size: 16px;
+}
+
+/* Markdown view toggle */
+.markdown-view-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-left: 1px solid;
+}
+
+.markdown-view-toggle.light {
+  border-left-color: #e5e5e5;
+}
+
+.markdown-view-toggle.dark {
+  border-left-color: #3e3e42;
+}
+
+.view-mode-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.view-mode-button.light {
+  color: #424242;
+}
+
+.view-mode-button.dark {
+  color: #cccccc;
+}
+
+.view-mode-button.light:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.view-mode-button.dark:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.view-mode-button svg {
+  font-size: 18px;
 }
 
