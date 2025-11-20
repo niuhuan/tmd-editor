@@ -88,6 +88,19 @@ async fn read_file_content(path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+async fn read_image_file(path: String) -> Result<String, String> {
+    use base64::{Engine as _, engine::general_purpose};
+    
+    match fs::read(&path) {
+        Ok(bytes) => {
+            let base64_string = general_purpose::STANDARD.encode(&bytes);
+            Ok(base64_string)
+        }
+        Err(e) => Err(format!("Failed to read image file: {}", e)),
+    }
+}
+
+#[tauri::command]
 async fn create_file(path: String) -> Result<(), String> {
     match fs::File::create(&path) {
         Ok(_) => Ok(()),
@@ -262,6 +275,7 @@ pub fn run() {
             greet,
             read_directory,
             read_file_content,
+            read_image_file,
             create_file,
             create_directory,
             delete_path,

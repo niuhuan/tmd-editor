@@ -10,7 +10,7 @@ export interface OpenFile {
   name: string;
   content: string;
   originalContent: string;  // Track original content for dirty state
-  type: 'txt' | 'markdown' | 'unsupported';
+  type: 'txt' | 'markdown' | 'image' | 'unsupported';
   isUnsupported?: boolean;
   isDirty?: boolean;  // Has unsaved changes
   markdownViewMode?: 'rich' | 'source' | 'split';  // Markdown view mode: rich (WYSIWYG), source (code only), split (side-by-side)

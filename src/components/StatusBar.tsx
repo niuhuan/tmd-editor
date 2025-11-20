@@ -18,6 +18,8 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeFile }) => {
         return 'Markdown';
       case 'txt':
         return 'Plain Text';
+      case 'image':
+        return 'Image';
       case 'unsupported':
         return 'Unsupported';
       default:

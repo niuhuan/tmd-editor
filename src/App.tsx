@@ -24,10 +24,11 @@ function App() {
     setTheme(themeMode === 'light' ? 'dark' : 'light');
   };
 
-  const getFileType = (filename: string): 'txt' | 'markdown' | 'unsupported' => {
+  const getFileType = (filename: string): 'txt' | 'markdown' | 'image' | 'unsupported' => {
     const ext = filename.toLowerCase().split('.').pop();
     if (ext === 'txt') return 'txt';
     if (ext === 'md' || ext === 'markdown') return 'markdown';
+    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext || '')) return 'image';
     return 'unsupported';
   };
 
@@ -46,11 +47,37 @@ function App() {
       }
     }
 
-    // Read file content
+    const filename = path.split(/[/\\]/).pop() || 'Unknown';
+    const fileType = getFileType(filename);
+
+    // Handle different file types
     try {
-      const content = await invoke<string>('read_file_content', { path });
-      const filename = path.split(/[/\\]/).pop() || 'Unknown';
-      const fileType = getFileType(filename);
+      let content = '';
+      
+      if (fileType === 'image') {
+        // Read image as base64
+        content = await invoke<string>('read_image_file', { path });
+      } else if (fileType === 'txt' || fileType === 'markdown') {
+        // Read text file
+        try {
+          content = await invoke<string>('read_file_content', { path });
+        } catch (error) {
+          // If text reading fails, treat as unsupported
+          console.error('Failed to read as text:', error);
+          const newFile: OpenFile = {
+            path,
+            name: filename,
+            content: '',
+            originalContent: '',
+            type: 'unsupported',
+            isUnsupported: true,
+            isDirty: false,
+          };
+          setOpenFiles(prev => [...prev.filter(f => !f.isUnsupported), newFile]);
+          setActiveFile(path);
+          return;
+        }
+      }
       
       const newFile: OpenFile = {
         path,
@@ -63,9 +90,9 @@ function App() {
         markdownViewMode: fileType === 'markdown' ? settings.markdownDefaultMode : undefined,
       };
 
-      // If opening an unsupported file, close any existing unsupported file
-      if (newFile.isUnsupported) {
-        setOpenFiles(prev => [...prev.filter(f => !f.isUnsupported), newFile]);
+      // If opening an unsupported file or image, close any existing unsupported file
+      if (newFile.isUnsupported || fileType === 'image') {
+        setOpenFiles(prev => [...prev.filter(f => !f.isUnsupported && f.type !== 'image'), newFile]);
       } else {
         setOpenFiles(prev => [...prev, newFile]);
       }
@@ -73,7 +100,18 @@ function App() {
       setActiveFile(path);
     } catch (error) {
       console.error('Failed to read file:', error);
-      alert(`Failed to open file: ${error}`);
+      // Don't show alert, just display unsupported message
+      const newFile: OpenFile = {
+        path,
+        name: filename,
+        content: '',
+        originalContent: '',
+        type: 'unsupported',
+        isUnsupported: true,
+        isDirty: false,
+      };
+      setOpenFiles(prev => [...prev.filter(f => !f.isUnsupported), newFile]);
+      setActiveFile(path);
     }
   };
 

@@ -174,6 +174,35 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
     );
   }
 
+  if (file.type === 'image') {
+    // Get file extension to determine MIME type
+    const ext = file.name.toLowerCase().split('.').pop() || '';
+    let mimeType = 'image/png';
+    if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+    else if (ext === 'gif') mimeType = 'image/gif';
+    else if (ext === 'bmp') mimeType = 'image/bmp';
+    else if (ext === 'webp') mimeType = 'image/webp';
+    else if (ext === 'svg') mimeType = 'image/svg+xml';
+    else if (ext === 'ico') mimeType = 'image/x-icon';
+
+    return (
+      <div className={`editor-pane image-preview ${mode}`}>
+        <div className="image-preview-container">
+          <div className="image-preview-header">
+            <span className="image-info">{file.name}</span>
+          </div>
+          <div className="image-preview-content">
+            <img 
+              src={`data:${mimeType};base64,${file.content}`}
+              alt={file.name}
+              className="preview-image"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (file.type === 'markdown') {
     const viewMode = file.markdownViewMode || 'rich';
     
@@ -194,6 +223,13 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
               wordWrap: 'off',
               automaticLayout: true,
               scrollBeyondLastLine: false,
+              scrollbar: {
+                vertical: 'visible',
+                horizontal: 'visible',
+                useShadows: false,
+                verticalScrollbarSize: 10,
+                horizontalScrollbarSize: 10,
+              },
             }}
           />
         </div>
@@ -221,6 +257,13 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
                 wordWrap: 'off',
                 automaticLayout: true,
                 scrollBeyondLastLine: false,
+                scrollbar: {
+                  vertical: 'visible',
+                  horizontal: 'visible',
+                  useShadows: false,
+                  verticalScrollbarSize: 10,
+                  horizontalScrollbarSize: 10,
+                },
               }}
             />
           </div>
@@ -302,6 +345,13 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
           wordWrap: 'off',  // Disable word wrap to avoid IME composition issues
           automaticLayout: true,
           scrollBeyondLastLine: false,
+          scrollbar: {
+            vertical: 'visible',
+            horizontal: 'visible',
+            useShadows: false,
+            verticalScrollbarSize: 10,
+            horizontalScrollbarSize: 10,
+          },
         }}
       />
     </div>
