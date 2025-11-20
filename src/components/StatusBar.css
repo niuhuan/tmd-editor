@@ -1,0 +1,31 @@
+.status-bar {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.status-bar.light {
+  background-color: #007acc;
+  color: #ffffff;
+}
+
+.status-bar.dark {
+  background-color: #007acc;
+  color: #ffffff;
+}
+
+.status-bar-left,
+.status-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-bar-item {
+  cursor: default;
+}
+

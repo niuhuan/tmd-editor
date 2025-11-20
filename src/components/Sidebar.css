@@ -1,0 +1,250 @@
+.sidebar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid;
+}
+
+.sidebar.light {
+  background-color: #f3f3f3;
+  border-right-color: #e5e5e5;
+}
+
+.sidebar.dark {
+  background-color: #252526;
+  border-right-color: #3e3e42;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 35px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid;
+  flex-shrink: 0;
+}
+
+.sidebar-header.light {
+  background-color: #f3f3f3;
+  color: #616161;
+  border-bottom-color: #e5e5e5;
+}
+
+.sidebar-header.dark {
+  background-color: #252526;
+  color: #858585;
+  border-bottom-color: #3e3e42;
+}
+
+.sidebar-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.action-btn.light {
+  color: #616161;
+}
+
+.action-btn.dark {
+  color: #858585;
+}
+
+.action-btn.light:hover:not(:disabled) {
+  background-color: #e0e0e0;
+  color: #333333;
+}
+
+.action-btn.dark:hover:not(:disabled) {
+  background-color: #2a2d2e;
+  color: #cccccc;
+}
+
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Empty state styles */
+.sidebar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 16px;
+  height: 100%;
+}
+
+.sidebar-empty.light {
+  color: #616161;
+}
+
+.sidebar-empty.dark {
+  color: #858585;
+}
+
+.sidebar-empty p {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.open-folder-button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.open-folder-button.light {
+  background-color: #007acc;
+  color: #ffffff;
+}
+
+.open-folder-button.dark {
+  background-color: #0e639c;
+  color: #ffffff;
+}
+
+.open-folder-button.light:hover {
+  background-color: #005a9e;
+}
+
+.open-folder-button.dark:hover {
+  background-color: #1177bb;
+}
+
+/* Create item form */
+.create-item-form {
+  padding: 12px;
+  border-bottom: 1px solid;
+}
+
+.create-item-form.light {
+  background-color: #f3f3f3;
+  border-bottom-color: #e5e5e5;
+}
+
+.create-item-form.dark {
+  background-color: #252526;
+  border-bottom-color: #3e3e42;
+}
+
+.create-item-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.create-item-input {
+  padding: 6px 8px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.create-item-input.light {
+  background-color: #ffffff;
+  border-color: #d0d0d0;
+  color: #333333;
+}
+
+.create-item-input.dark {
+  background-color: #3c3c3c;
+  border-color: #3e3e42;
+  color: #cccccc;
+}
+
+.create-item-input.light:focus {
+  border-color: #007acc;
+}
+
+.create-item-input.dark:focus {
+  border-color: #007acc;
+}
+
+.create-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.create-btn,
+.cancel-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 2px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.create-btn.light {
+  background-color: #007acc;
+  color: #ffffff;
+}
+
+.create-btn.dark {
+  background-color: #0e639c;
+  color: #ffffff;
+}
+
+.create-btn.light:hover {
+  background-color: #005a9e;
+}
+
+.create-btn.dark:hover {
+  background-color: #1177bb;
+}
+
+.cancel-btn.light {
+  background-color: #e0e0e0;
+  color: #333333;
+}
+
+.cancel-btn.dark {
+  background-color: #3c3c3c;
+  color: #cccccc;
+}
+
+.cancel-btn.light:hover {
+  background-color: #d0d0d0;
+}
+
+.cancel-btn.dark:hover {
+  background-color: #4f4f4f;
+}
