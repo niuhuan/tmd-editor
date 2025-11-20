@@ -37,7 +37,7 @@ interface EditorPaneProps {
   onContentChange: (path: string, content: string) => void;
 }
 
-export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange }) => {
+const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange }) => {
   const { mode } = useTheme();
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
@@ -212,8 +212,9 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
         <div className={`editor-pane monaco ${mode}`}>
           <Editor
             height="100%"
+            path={file.path}
             defaultLanguage="markdown"
-            value={file.content}
+            defaultValue={file.content}
             onChange={handleMonacoChange}
             theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
             options={{
@@ -243,8 +244,9 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
           <div className="split-editor">
             <Editor
               height="100%"
+              path={file.path}
               defaultLanguage="markdown"
-              value={file.content}
+              defaultValue={file.content}
               onChange={handleMonacoChange}
               onMount={(editor) => {
                 editorRef.current = editor;
@@ -284,7 +286,6 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
     return (
       <div className={`editor-pane markdown ${mode}`}>
         <MDXEditor
-          key={file.path}
           markdown={file.content}
           onChange={handleMarkdownChange}
           contentEditableClassName="markdown-editor-content"
@@ -334,8 +335,9 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
     <div className={`editor-pane monaco ${mode}`}>
       <Editor
         height="100%"
+        path={file.path}
         defaultLanguage="plaintext"
-        value={file.content}
+        defaultValue={file.content}
         onChange={handleMonacoChange}
         theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
         options={{
@@ -357,4 +359,15 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
     </div>
   );
 };
+
+// Memoize to prevent unnecessary re-renders when switching tabs
+// Only re-render if file path, content, type, or view mode changes
+export const EditorPane = React.memo(EditorPaneComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.file.path === nextProps.file.path &&
+    prevProps.file.content === nextProps.file.content &&
+    prevProps.file.type === nextProps.file.type &&
+    prevProps.file.markdownViewMode === nextProps.file.markdownViewMode
+  );
+});
 
