@@ -132,6 +132,14 @@ async fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+async fn save_file(path: String, content: String) -> Result<(), String> {
+    match fs::write(&path, content) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to save file: {}", e)),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_imports)]
@@ -176,6 +184,15 @@ pub fn run() {
             
             let file_menu = file_menu_builder.build()?;
             
+            // Create Save menu items
+            let save_item = MenuItemBuilder::with_id("save", "Save")
+                .accelerator("CmdOrCtrl+S")
+                .build(app)?;
+            
+            let save_all_item = MenuItemBuilder::with_id("save-all", "Save All")
+                .accelerator("CmdOrCtrl+Alt+S")
+                .build(app)?;
+            
             // Create Edit menu with standard editing commands
             let edit_menu = SubmenuBuilder::new(app, "Edit")
                 .undo()
@@ -186,6 +203,9 @@ pub fn run() {
                 .paste()
                 .separator()
                 .select_all()
+                .separator()
+                .item(&save_item)
+                .item(&save_all_item)
                 .build()?;
             
             // Create main menu
@@ -225,6 +245,12 @@ pub fn run() {
                         "settings" => {
                             let _ = window.emit("menu-settings", ());
                         }
+                        "save" => {
+                            let _ = window.emit("menu-save", ());
+                        }
+                        "save-all" => {
+                            let _ = window.emit("menu-save-all", ());
+                        }
                         _ => {}
                     }
                 }
@@ -240,6 +266,7 @@ pub fn run() {
             create_directory,
             delete_path,
             rename_path,
+            save_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { ThemeContext, lightTheme, darkTheme } from "./theme";
@@ -18,6 +18,7 @@ function App() {
   const [openFolderTrigger, setOpenFolderTrigger] = useState<number>(0);
   const [openFileTrigger, setOpenFileTrigger] = useState<number>(0);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const autoSaveTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const toggleTheme = () => {
     setTheme(themeMode === 'light' ? 'dark' : 'light');
@@ -55,8 +56,10 @@ function App() {
         path,
         name: filename,
         content,
+        originalContent: content,
         type: fileType,
         isUnsupported: fileType === 'unsupported',
+        isDirty: false,
       };
 
       // If opening an unsupported file, close any existing unsupported file
@@ -97,9 +100,67 @@ function App() {
   };
 
   const handleContentChange = (path: string, content: string) => {
-    setOpenFiles(prev => prev.map(f => 
-      f.path === path ? { ...f, content } : f
-    ));
+    setOpenFiles(prev => prev.map(f => {
+      if (f.path === path) {
+        const isDirty = content !== f.originalContent;
+        
+        // Clear existing auto save timer
+        const existingTimer = autoSaveTimers.current.get(path);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+        
+        // Set new auto save timer if enabled
+        if (settings.autoSave === 'afterDelay' && isDirty) {
+          const timer = setTimeout(() => {
+            saveFile(path, content);
+          }, settings.autoSaveDelay);
+          autoSaveTimers.current.set(path, timer);
+        }
+        
+        return { ...f, content, isDirty };
+      }
+      return f;
+    }));
+  };
+
+  const saveFile = async (path: string, content?: string) => {
+    const file = openFiles.find(f => f.path === path);
+    if (!file) return;
+
+    const contentToSave = content ?? file.content;
+
+    try {
+      await invoke('save_file', { path, content: contentToSave });
+      
+      // Update file state: mark as not dirty, update original content
+      setOpenFiles(prev => prev.map(f => 
+        f.path === path 
+          ? { ...f, content: contentToSave, originalContent: contentToSave, isDirty: false } 
+          : f
+      ));
+      
+      // Clear auto save timer
+      const timer = autoSaveTimers.current.get(path);
+      if (timer) {
+        clearTimeout(timer);
+        autoSaveTimers.current.delete(path);
+      }
+      
+      console.log(`File saved: ${path}`);
+    } catch (error) {
+      console.error('Failed to save file:', error);
+      alert(`Failed to save file: ${error}`);
+    }
+  };
+
+  const saveActiveFile = () => {
+    if (activeFile) {
+      const file = openFiles.find(f => f.path === activeFile);
+      if (file && file.isDirty) {
+        saveFile(activeFile);
+      }
+    }
   };
 
   const handleOpenSettings = () => {
@@ -129,10 +190,29 @@ function App() {
       handleOpenSettings();
     });
 
+    const unlistenSave = listen('menu-save', () => {
+      saveActiveFile();
+    });
+
+    const unlistenSaveAll = listen('menu-save-all', () => {
+      saveAllFiles();
+    });
+
     return () => {
       unlistenOpenFolder.then(fn => fn());
       unlistenOpenFile.then(fn => fn());
       unlistenSettings.then(fn => fn());
+      unlistenSave.then(fn => fn());
+      unlistenSaveAll.then(fn => fn());
+    };
+  }, [openFiles, activeFile]);
+
+
+  // Cleanup auto save timers on unmount
+  useEffect(() => {
+    return () => {
+      autoSaveTimers.current.forEach(timer => clearTimeout(timer));
+      autoSaveTimers.current.clear();
     };
   }, []);
 

@@ -57,10 +57,13 @@ export const TabBar: React.FC<TabBarProps> = ({
       {openFiles.map((file) => (
         <div
           key={file.path}
-          className={`tab ${mode} ${!showSettings && activeFile === file.path ? 'active' : ''}`}
+          className={`tab ${mode} ${!showSettings && activeFile === file.path ? 'active' : ''} ${file.isDirty ? 'dirty' : ''}`}
           onClick={() => onTabClick(file.path)}
         >
-          <span className="tab-name">{file.name}</span>
+          <span className="tab-name">
+            {file.isDirty && <span className="dirty-indicator">●</span>}
+            {file.name}
+          </span>
           <button
             className={`tab-close ${mode}`}
             onClick={(e) => handleCloseClick(e, file.path)}

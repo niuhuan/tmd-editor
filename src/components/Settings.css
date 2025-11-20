@@ -98,6 +98,45 @@
   flex-shrink: 0;
 }
 
+/* Select and Input */
+.setting-select,
+.setting-input {
+  padding: 4px 8px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.setting-select.light,
+.setting-input.light {
+  background-color: #ffffff;
+  border-color: #d0d0d0;
+  color: #333333;
+}
+
+.setting-select.dark,
+.setting-input.dark {
+  background-color: #3c3c3c;
+  border-color: #3e3e42;
+  color: #cccccc;
+}
+
+.setting-select.light:focus,
+.setting-input.light:focus {
+  border-color: #007acc;
+}
+
+.setting-select.dark:focus,
+.setting-input.dark:focus {
+  border-color: #007acc;
+}
+
+.setting-input {
+  width: 80px;
+}
+
 /* Toggle Switch */
 .toggle-switch {
   position: relative;

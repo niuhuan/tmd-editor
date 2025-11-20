@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Store } from '@tauri-apps/plugin-store';
 import { ThemeMode } from '../theme';
-import { AppSettings } from '../components/Settings';
+import { AppSettings, AutoSaveMode } from '../components/Settings';
 
 interface StoredSettings {
   theme: ThemeMode;
   showHiddenFiles: boolean;
+  autoSave: AutoSaveMode;
+  autoSaveDelay: number;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
   theme: 'light',
   showHiddenFiles: true,
+  autoSave: 'afterDelay',  // Default to auto save
+  autoSaveDelay: 100,  // Fast auto save
 };
 
 let store: Store | null = null;
@@ -26,6 +30,8 @@ export function usePersistedSettings() {
   const [theme, setTheme] = useState<ThemeMode>(DEFAULT_SETTINGS.theme);
   const [appSettings, setAppSettings] = useState<AppSettings>({
     showHiddenFiles: DEFAULT_SETTINGS.showHiddenFiles,
+    autoSave: DEFAULT_SETTINGS.autoSave,
+    autoSaveDelay: DEFAULT_SETTINGS.autoSaveDelay,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -40,17 +46,19 @@ export function usePersistedSettings() {
       
       const savedTheme = await storeInstance.get<ThemeMode>('theme');
       const savedShowHiddenFiles = await storeInstance.get<boolean>('showHiddenFiles');
+      const savedAutoSave = await storeInstance.get<AutoSaveMode>('autoSave');
+      const savedAutoSaveDelay = await storeInstance.get<number>('autoSaveDelay');
 
       if (savedTheme) {
         setTheme(savedTheme);
       }
       
-      if (savedShowHiddenFiles !== null && savedShowHiddenFiles !== undefined) {
-        setAppSettings(prev => ({
-          ...prev,
-          showHiddenFiles: savedShowHiddenFiles,
-        }));
-      }
+      setAppSettings(prev => ({
+        ...prev,
+        showHiddenFiles: savedShowHiddenFiles ?? prev.showHiddenFiles,
+        autoSave: savedAutoSave ?? prev.autoSave,
+        autoSaveDelay: savedAutoSaveDelay ?? prev.autoSaveDelay,
+      }));
 
       setIsLoaded(true);
     } catch (error) {
@@ -75,6 +83,8 @@ export function usePersistedSettings() {
     try {
       const storeInstance = await getStore();
       await storeInstance.set('showHiddenFiles', newSettings.showHiddenFiles);
+      await storeInstance.set('autoSave', newSettings.autoSave);
+      await storeInstance.set('autoSaveDelay', newSettings.autoSaveDelay);
       await storeInstance.save();
     } catch (error) {
       console.error('Failed to save app settings:', error);
