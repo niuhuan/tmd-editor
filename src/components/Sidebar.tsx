@@ -14,9 +14,10 @@ interface SidebarProps {
   openFolderTrigger?: number;
   openFileTrigger?: number;
   showHiddenFiles?: boolean;
+  activeFilePath?: string | null;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, openFileTrigger, showHiddenFiles = true }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, openFileTrigger, showHiddenFiles = true, activeFilePath }) => {
   const [rootPath, setRootPath] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
   const [selectedEntry, setSelectedEntry] = useState<FileEntry | null>(null);
@@ -255,10 +256,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
         <FileTree 
           rootPath={rootPath} 
           onFileClick={onFileClick}
-          selectedPath={selectedEntry?.path || null}
-          onSelect={setSelectedEntry}
+          activeFilePath={activeFilePath}
           refreshKey={refreshKey}
           showHiddenFiles={showHiddenFiles}
+          onRefreshNeeded={() => setRefreshKey(prev => prev + 1)}
         />
       </div>
     </div>

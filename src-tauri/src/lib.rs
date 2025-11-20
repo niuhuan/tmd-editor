@@ -103,6 +103,35 @@ async fn create_directory(path: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+async fn delete_path(path: String) -> Result<(), String> {
+    let path_buf = PathBuf::from(&path);
+    
+    if !path_buf.exists() {
+        return Err("Path does not exist".to_string());
+    }
+    
+    if path_buf.is_dir() {
+        match fs::remove_dir_all(&path) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("Failed to delete directory: {}", e)),
+        }
+    } else {
+        match fs::remove_file(&path) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(format!("Failed to delete file: {}", e)),
+        }
+    }
+}
+
+#[tauri::command]
+async fn rename_path(old_path: String, new_path: String) -> Result<(), String> {
+    match fs::rename(&old_path, &new_path) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to rename: {}", e)),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_imports)]
@@ -209,6 +238,8 @@ pub fn run() {
             read_file_content,
             create_file,
             create_directory,
+            delete_path,
+            rename_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

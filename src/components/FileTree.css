@@ -5,6 +5,7 @@
   overflow-x: hidden;
   user-select: none;
   font-size: 13px;
+  outline: none;
 }
 
 .file-tree.light {
@@ -70,6 +71,27 @@
 .file-tree-item .file-name {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.file-rename-input {
+  flex: 1;
+  padding: 0 4px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  background: transparent;
+}
+
+.file-rename-input.light {
+  border-color: #007acc;
+  color: #333333;
+}
+
+.file-rename-input.dark {
+  border-color: #007acc;
+  color: #cccccc;
 }
 
 .file-tree-children {

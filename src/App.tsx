@@ -160,6 +160,7 @@ function App() {
               openFolderTrigger={openFolderTrigger}
               openFileTrigger={openFileTrigger}
               showHiddenFiles={settings.showHiddenFiles}
+              activeFilePath={activeFile}
             />
           </div>
           <div className="app-main">

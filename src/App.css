@@ -4,6 +4,15 @@
   box-sizing: border-box;
 }
 
+/* Prevent selection of UI elements */
+.app-sidebar,
+.activity-bar,
+.tab-bar,
+.status-bar {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
