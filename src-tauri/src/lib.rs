@@ -147,6 +147,18 @@ pub fn run() {
             
             let file_menu = file_menu_builder.build()?;
             
+            // Create Edit menu with standard editing commands
+            let edit_menu = SubmenuBuilder::new(app, "Edit")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .separator()
+                .select_all()
+                .build()?;
+            
             // Create main menu
             let menu = Menu::new(app)?;
             
@@ -164,6 +176,9 @@ pub fn run() {
             
             // Add File menu
             menu.append(&file_menu)?;
+            
+            // Add Edit menu
+            menu.append(&edit_menu)?;
             
             app.set_menu(menu)?;
             
