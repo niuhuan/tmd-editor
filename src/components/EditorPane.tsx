@@ -1,6 +1,30 @@
 import React from 'react';
 import Editor from '@monaco-editor/react';
-import { MDXEditor, headingsPlugin, listsPlugin, quotePlugin, thematicBreakPlugin, markdownShortcutPlugin, linkPlugin, linkDialogPlugin, tablePlugin, codeBlockPlugin, codeMirrorPlugin } from '@mdxeditor/editor';
+import { 
+  MDXEditor, 
+  headingsPlugin, 
+  listsPlugin, 
+  quotePlugin, 
+  thematicBreakPlugin, 
+  markdownShortcutPlugin, 
+  linkPlugin, 
+  linkDialogPlugin, 
+  tablePlugin, 
+  codeBlockPlugin, 
+  codeMirrorPlugin,
+  imagePlugin,
+  toolbarPlugin,
+  UndoRedo,
+  BoldItalicUnderlineToggles,
+  BlockTypeSelect,
+  CreateLink,
+  InsertImage,
+  InsertTable,
+  InsertThematicBreak,
+  ListsToggle,
+  Separator,
+  InsertCodeBlock
+} from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import { OpenFile } from '../types';
 import { useTheme } from '../theme';
@@ -22,6 +46,18 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
 
   const handleMarkdownChange = (value: string) => {
     onContentChange(file.path, value);
+  };
+
+  // Image upload handler - for now, just use the provided URL/path directly
+  const imageUploadHandler = async (image: File): Promise<string> => {
+    // For local files, we can use file:// protocol or data URL
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        resolve(e.target?.result as string);
+      };
+      reader.readAsDataURL(image);
+    });
   };
 
   if (file.isUnsupported) {
@@ -71,6 +107,27 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
           onChange={handleMarkdownChange}
           contentEditableClassName="markdown-editor-content"
           plugins={[
+            toolbarPlugin({
+              toolbarContents: () => (
+                <>
+                  <UndoRedo />
+                  <Separator />
+                  <BoldItalicUnderlineToggles />
+                  <Separator />
+                  <BlockTypeSelect />
+                  <Separator />
+                  <CreateLink />
+                  <InsertImage />
+                  <Separator />
+                  <ListsToggle />
+                  <Separator />
+                  <InsertTable />
+                  <InsertThematicBreak />
+                  <Separator />
+                  <InsertCodeBlock />
+                </>
+              ),
+            }),
             headingsPlugin(),
             listsPlugin(),
             quotePlugin(),
@@ -78,6 +135,9 @@ export const EditorPane: React.FC<EditorPaneProps> = ({ file, onContentChange })
             markdownShortcutPlugin(),
             linkPlugin(),
             linkDialogPlugin(),
+            imagePlugin({
+              imageUploadHandler,
+            }),
             tablePlugin(),
             codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
             codeMirrorPlugin({ codeBlockLanguages: { txt: 'Text', js: 'JavaScript', ts: 'TypeScript', jsx: 'JSX', tsx: 'TSX', css: 'CSS', html: 'HTML', json: 'JSON', python: 'Python', rust: 'Rust' } }),
