@@ -118,6 +118,10 @@ pub fn run() {
                 .accelerator("CmdOrCtrl+O")
                 .build(app)?;
             
+            let open_file = MenuItemBuilder::with_id("open-file", "Open File...")
+                .accelerator("CmdOrCtrl+Shift+O")
+                .build(app)?;
+            
             let settings_item = MenuItemBuilder::with_id("settings", "Settings...")
                 .accelerator("CmdOrCtrl+,")
                 .build(app)?;
@@ -125,7 +129,8 @@ pub fn run() {
             // Build File submenu
             #[allow(unused_mut)]
             let mut file_menu_builder = SubmenuBuilder::new(app, "File")
-                .item(&open_folder);
+                .item(&open_folder)
+                .item(&open_file);
             
             // On Windows and Linux, add Settings and Exit in File menu
             #[cfg(not(target_os = "macos"))]
@@ -168,6 +173,9 @@ pub fn run() {
                     match event_id {
                         "open-folder" => {
                             let _ = window.emit("menu-open-folder", ());
+                        }
+                        "open-file" => {
+                            let _ = window.emit("menu-open-file", ());
                         }
                         "settings" => {
                             let _ = window.emit("menu-settings", ());

@@ -125,7 +125,8 @@
   line-height: 1.5;
 }
 
-.open-folder-button {
+.open-folder-button,
+.open-file-button {
   padding: 6px 14px;
   border: none;
   border-radius: 2px;
@@ -133,23 +134,28 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+  margin-bottom: 8px;
 }
 
-.open-folder-button.light {
+.open-folder-button.light,
+.open-file-button.light {
   background-color: #007acc;
   color: #ffffff;
 }
 
-.open-folder-button.dark {
+.open-folder-button.dark,
+.open-file-button.dark {
   background-color: #0e639c;
   color: #ffffff;
 }
 
-.open-folder-button.light:hover {
+.open-folder-button.light:hover,
+.open-file-button.light:hover {
   background-color: #005a9e;
 }
 
-.open-folder-button.dark:hover {
+.open-folder-button.dark:hover,
+.open-file-button.dark:hover {
   background-color: #1177bb;
 }
 

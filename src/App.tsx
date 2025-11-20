@@ -15,6 +15,7 @@ function App() {
   const [openFiles, setOpenFiles] = useState<OpenFile[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [openFolderTrigger, setOpenFolderTrigger] = useState<number>(0);
+  const [openFileTrigger, setOpenFileTrigger] = useState<number>(0);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [settings, setSettings] = useState<AppSettings>({
     showHiddenFiles: true, // Default to true
@@ -122,12 +123,17 @@ function App() {
       setOpenFolderTrigger(prev => prev + 1);
     });
 
+    const unlistenOpenFile = listen('menu-open-file', () => {
+      setOpenFileTrigger(prev => prev + 1);
+    });
+
     const unlistenSettings = listen('menu-settings', () => {
       handleOpenSettings();
     });
 
     return () => {
       unlistenOpenFolder.then(fn => fn());
+      unlistenOpenFile.then(fn => fn());
       unlistenSettings.then(fn => fn());
     };
   }, []);
@@ -149,6 +155,7 @@ function App() {
             <Sidebar 
               onFileClick={handleFileClick}
               openFolderTrigger={openFolderTrigger}
+              openFileTrigger={openFileTrigger}
               showHiddenFiles={settings.showHiddenFiles}
             />
           </div>

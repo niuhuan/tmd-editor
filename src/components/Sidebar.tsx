@@ -12,10 +12,11 @@ import './Sidebar.css';
 interface SidebarProps {
   onFileClick?: (path: string) => void;
   openFolderTrigger?: number;
+  openFileTrigger?: number;
   showHiddenFiles?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, showHiddenFiles = true }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, openFileTrigger, showHiddenFiles = true }) => {
   const [rootPath, setRootPath] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
   const [selectedEntry, setSelectedEntry] = useState<FileEntry | null>(null);
@@ -46,6 +47,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
     }
   }, [openFolderTrigger]);
 
+  useEffect(() => {
+    if (openFileTrigger !== undefined && openFileTrigger > 0) {
+      handleOpenFile();
+    }
+  }, [openFileTrigger]);
+
   const handleOpenFolder = async () => {
     try {
       const selected = await open({
@@ -69,6 +76,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
       }
     } catch (error) {
       console.error('Failed to open folder:', error);
+    }
+  };
+
+  const handleOpenFile = async () => {
+    try {
+      const selected = await open({
+        directory: false,
+        multiple: false,
+      });
+
+      if (selected && typeof selected === 'string' && onFileClick) {
+        onFileClick(selected);
+      }
+    } catch (error) {
+      console.error('Failed to open file:', error);
     }
   };
 
@@ -149,6 +171,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
               onClick={handleOpenFolder}
             >
               Open Folder
+            </button>
+            <button 
+              className={`open-file-button ${mode}`}
+              onClick={handleOpenFile}
+            >
+              Open File
             </button>
           </div>
         </div>
