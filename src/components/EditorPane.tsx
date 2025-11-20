@@ -34,10 +34,11 @@ import './EditorPane.css';
 
 interface EditorPaneProps {
   file: OpenFile;
+  isActive: boolean;
   onContentChange: (path: string, content: string) => void;
 }
 
-const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange }) => {
+const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onContentChange }) => {
   const { mode } = useTheme();
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
@@ -150,6 +151,16 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange 
     };
   }, [file.type, file.markdownViewMode, previewHtml]);
 
+  // Auto-focus editor when tab becomes active
+  useEffect(() => {
+    if (isActive && editorRef.current) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        editorRef.current?.focus();
+      }, 50);
+    }
+  }, [isActive]);
+
   // Image upload handler - for now, just use the provided URL/path directly
   const imageUploadHandler = async (image: File): Promise<string> => {
     // For local files, we can use file:// protocol or data URL
@@ -216,6 +227,12 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange 
             defaultLanguage="markdown"
             defaultValue={file.content}
             onChange={handleMonacoChange}
+            onMount={(editor) => {
+              editorRef.current = editor;
+              if (isActive) {
+                editor.focus();
+              }
+            }}
             theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
             options={{
               minimap: { enabled: false },
@@ -250,6 +267,9 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange 
               onChange={handleMonacoChange}
               onMount={(editor) => {
                 editorRef.current = editor;
+                if (isActive) {
+                  editor.focus();
+                }
               }}
               theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
               options={{
@@ -339,6 +359,12 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange 
         defaultLanguage="plaintext"
         defaultValue={file.content}
         onChange={handleMonacoChange}
+        onMount={(editor) => {
+          editorRef.current = editor;
+          if (isActive) {
+            editor.focus();
+          }
+        }}
         theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
         options={{
           minimap: { enabled: false },
@@ -361,13 +387,14 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, onContentChange 
 };
 
 // Memoize to prevent unnecessary re-renders when switching tabs
-// Only re-render if file path, content, type, or view mode changes
+// Only re-render if file path, content, type, view mode, or active state changes
 export const EditorPane = React.memo(EditorPaneComponent, (prevProps, nextProps) => {
   return (
     prevProps.file.path === nextProps.file.path &&
     prevProps.file.content === nextProps.file.content &&
     prevProps.file.type === nextProps.file.type &&
-    prevProps.file.markdownViewMode === nextProps.file.markdownViewMode
+    prevProps.file.markdownViewMode === nextProps.file.markdownViewMode &&
+    prevProps.isActive === nextProps.isActive
   );
 });
 

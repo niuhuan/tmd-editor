@@ -75,6 +75,7 @@ export const Editor: React.FC<EditorProps> = ({
         >
           <EditorPane 
             file={file}
+            isActive={!showSettings && activeFile === file.path}
             onContentChange={onContentChange}
           />
         </div>
