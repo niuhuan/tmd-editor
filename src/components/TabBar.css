@@ -85,9 +85,19 @@
 }
 
 .dirty-indicator {
-  margin-right: 4px;
-  font-size: 16px;
-  line-height: 1;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.dirty-indicator.light {
+  background-color: #333333;
+}
+
+.dirty-indicator.dark {
+  background-color: #ffffff;
 }
 
 .tab-close {
@@ -106,7 +116,27 @@
   flex-shrink: 0;
 }
 
-.tab:hover .tab-close {
+/* Hide close button by default, show dirty indicator if file is dirty */
+.tab.dirty .tab-close {
+  display: none;
+}
+
+.tab.dirty .dirty-indicator {
+  display: flex;
+}
+
+/* On hover, hide dirty indicator and show close button */
+.tab.dirty:hover .dirty-indicator {
+  display: none;
+}
+
+.tab.dirty:hover .tab-close {
+  display: flex;
+  opacity: 0.6;
+}
+
+/* Show close button on hover for non-dirty files */
+.tab:not(.dirty):hover .tab-close {
   opacity: 0.6;
 }
 

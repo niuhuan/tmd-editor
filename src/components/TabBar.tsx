@@ -9,6 +9,8 @@ interface TabBarProps {
   openFiles: OpenFile[];
   activeFile: string | null;
   showSettings: boolean;
+  autoSave: 'off' | 'afterDelay';
+  autoSaveDelay: number;
   onTabClick: (path: string) => void;
   onTabClose: (path: string) => void;
   onCloseSettings: () => void;
@@ -18,6 +20,8 @@ export const TabBar: React.FC<TabBarProps> = ({
   openFiles, 
   activeFile, 
   showSettings,
+  autoSave,
+  autoSaveDelay,
   onTabClick, 
   onTabClose,
   onCloseSettings
@@ -32,6 +36,14 @@ export const TabBar: React.FC<TabBarProps> = ({
   const handleCloseSettings = (e: React.MouseEvent) => {
     e.stopPropagation();
     onCloseSettings();
+  };
+
+  // Determine if we should show dirty indicator
+  const shouldShowDirty = (file: OpenFile) => {
+    if (!file.isDirty) return false;
+    // Don't show dirty indicator if auto save is enabled with delay < 500ms
+    if (autoSave === 'afterDelay' && autoSaveDelay < 500) return false;
+    return true;
   };
 
   if (openFiles.length === 0 && !showSettings) {
@@ -54,24 +66,27 @@ export const TabBar: React.FC<TabBarProps> = ({
           </button>
         </div>
       )}
-      {openFiles.map((file) => (
-        <div
-          key={file.path}
-          className={`tab ${mode} ${!showSettings && activeFile === file.path ? 'active' : ''} ${file.isDirty ? 'dirty' : ''}`}
-          onClick={() => onTabClick(file.path)}
-        >
-          <span className="tab-name">
-            {file.isDirty && <span className="dirty-indicator">●</span>}
-            {file.name}
-          </span>
-          <button
-            className={`tab-close ${mode}`}
-            onClick={(e) => handleCloseClick(e, file.path)}
+      {openFiles.map((file) => {
+        const showDirty = shouldShowDirty(file);
+        return (
+          <div
+            key={file.path}
+            className={`tab ${mode} ${!showSettings && activeFile === file.path ? 'active' : ''} ${showDirty ? 'dirty' : ''}`}
+            onClick={() => onTabClick(file.path)}
           >
-            <CloseIcon fontSize="small" />
-          </button>
-        </div>
-      ))}
+            <span className="tab-name">
+              {file.name}
+            </span>
+            {showDirty && <span className={`dirty-indicator ${mode}`}></span>}
+            <button
+              className={`tab-close ${mode}`}
+              onClick={(e) => handleCloseClick(e, file.path)}
+            >
+              <CloseIcon fontSize="small" />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 };
