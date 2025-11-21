@@ -313,11 +313,13 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
 // Memoize to prevent unnecessary re-renders when switching tabs
 // Only re-render if file path, content, type, view mode, or active state changes
 export const EditorPane = React.memo(EditorPaneComponent, (prevProps, nextProps) => {
+  // Only re-render if file content or type changes
+  // isActive changes should NOT trigger re-render (it only affects autoFocus)
   return (
     prevProps.file.path === nextProps.file.path &&
     prevProps.file.content === nextProps.file.content &&
     prevProps.file.type === nextProps.file.type &&
-    prevProps.file.markdownViewMode === nextProps.file.markdownViewMode &&
-    prevProps.isActive === nextProps.isActive
+    prevProps.file.markdownViewMode === nextProps.file.markdownViewMode
+    // Removed isActive from comparison to prevent unnecessary re-renders
   );
 });

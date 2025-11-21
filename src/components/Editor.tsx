@@ -52,15 +52,16 @@ export const Editor: React.FC<EditorProps> = ({
         onMarkdownViewModeChange={onMarkdownViewModeChange}
       />
       
-      {/* Settings - only render when visible */}
-      {showSettings && (
-        <div className="editor-content">
-          <Settings 
-            settings={settings}
-            onSettingsChange={onSettingsChange}
-          />
-        </div>
-      )}
+      {/* Settings - always mounted, show/hide with CSS */}
+      <div 
+        className="editor-content"
+        style={{ display: showSettings ? 'flex' : 'none' }}
+      >
+        <Settings 
+          settings={settings}
+          onSettingsChange={onSettingsChange}
+        />
+      </div>
       
       {/* Render all open files, hide inactive ones with CSS */}
       {openFiles.map(file => (

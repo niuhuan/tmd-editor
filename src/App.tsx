@@ -241,28 +241,36 @@ function App() {
   };
 
   const handleContentChange = (path: string, content: string) => {
-    setOpenFiles(prev => prev.map(f => {
-      if (f.path === path) {
-        const isDirty = content !== f.originalContent;
-        
-        // Clear existing auto save timer
-        const existingTimer = autoSaveTimers.current.get(path);
-        if (existingTimer) {
-          clearTimeout(existingTimer);
-        }
-        
-        // Set new auto save timer if enabled
-        if (settings.autoSave === 'afterDelay' && isDirty) {
-          const timer = setTimeout(() => {
-            saveFile(path, content);
-          }, settings.autoSaveDelay);
-          autoSaveTimers.current.set(path, timer);
-        }
-        
-        return { ...f, content, isDirty };
+    setOpenFiles(prev => {
+      const targetFile = prev.find(f => f.path === path);
+      if (!targetFile) return prev;
+      
+      const isDirty = content !== targetFile.originalContent;
+      
+      // If content and isDirty haven't changed, return the same array
+      if (targetFile.content === content && targetFile.isDirty === isDirty) {
+        return prev;
       }
-      return f;
-    }));
+      
+      // Clear existing auto save timer
+      const existingTimer = autoSaveTimers.current.get(path);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+      
+      // Set new auto save timer if enabled
+      if (settings.autoSave === 'afterDelay' && isDirty) {
+        const timer = setTimeout(() => {
+          saveFile(path, content);
+        }, settings.autoSaveDelay);
+        autoSaveTimers.current.set(path, timer);
+      }
+      
+      // Only create new array if actually changed
+      return prev.map(f => 
+        f.path === path ? { ...f, content, isDirty } : f
+      );
+    });
   };
 
   const saveFile = async (path: string, content?: string) => {
@@ -311,13 +319,24 @@ function App() {
     }
   };
 
+  const previousActiveFileRef = useRef<string | null>(null);
+
   const handleOpenSettings = () => {
+    // Save current active file before opening settings
+    previousActiveFileRef.current = activeFile;
     setShowSettings(true);
     setActiveFile(null);
   };
 
   const handleCloseSettings = () => {
     setShowSettings(false);
+    // Restore previous active file
+    if (previousActiveFileRef.current && openFiles.find(f => f.path === previousActiveFileRef.current)) {
+      setActiveFile(previousActiveFileRef.current);
+    } else if (openFiles.length > 0) {
+      // If previous file was closed, activate the first file
+      setActiveFile(openFiles[0].path);
+    }
   };
 
   const handleToggleTerminal = () => {
@@ -340,33 +359,42 @@ function App() {
   };
 
   const handleMarkdownViewModeToggle = (path: string) => {
-    setOpenFiles(prev => prev.map(f => {
-      if (f.path === path && f.type === 'markdown') {
-        // Cycle through modes: source -> split -> rich -> source
-        const currentMode = f.markdownViewMode || 'source';
-        let newMode: 'rich' | 'source' | 'split';
-        
-        if (currentMode === 'source') {
-          newMode = 'split';
-        } else if (currentMode === 'split') {
-          newMode = 'rich';
-        } else {
-          newMode = 'source';
-        }
-        
-        return { ...f, markdownViewMode: newMode };
+    setOpenFiles(prev => {
+      const targetFile = prev.find(f => f.path === path && f.type === 'markdown');
+      if (!targetFile) return prev;
+      
+      // Cycle through modes: source -> split -> rich -> source
+      const currentMode = targetFile.markdownViewMode || 'source';
+      let newMode: 'rich' | 'source' | 'split';
+      
+      if (currentMode === 'source') {
+        newMode = 'split';
+      } else if (currentMode === 'split') {
+        newMode = 'rich';
+      } else {
+        newMode = 'source';
       }
-      return f;
-    }));
+      
+      // Only create new array if mode actually changed
+      return prev.map(f => 
+        f.path === path && f.type === 'markdown' 
+          ? { ...f, markdownViewMode: newMode }
+          : f
+      );
+    });
   };
 
   const handleMarkdownViewModeChange = (path: string, mode: 'rich' | 'source' | 'split') => {
-    setOpenFiles(prev => prev.map(f => {
-      if (f.path === path && f.type === 'markdown') {
-        return { ...f, markdownViewMode: mode };
-      }
-      return f;
-    }));
+    setOpenFiles(prev => {
+      const targetFile = prev.find(f => f.path === path && f.type === 'markdown');
+      if (!targetFile || targetFile.markdownViewMode === mode) return prev;
+      
+      return prev.map(f => 
+        f.path === path && f.type === 'markdown'
+          ? { ...f, markdownViewMode: mode }
+          : f
+      );
+    });
   };
 
   const handleSettingsChange = (newSettings: AppSettings) => {
@@ -431,6 +459,8 @@ function App() {
         <LspManager 
           workspacePath={currentWorkspace}
           onLspStatusChange={handleLspStatusChange}
+          enableRustLsp={settings.enableRustLsp}
+          enableGoLsp={settings.enableGoLsp}
         />
         <div 
           className={`app ${themeMode}`}

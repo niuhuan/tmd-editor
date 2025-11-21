@@ -403,6 +403,7 @@ pub fn run() {
             lsp::start_lsp_server,
             lsp::stop_lsp_server,
             lsp::detect_project_type,
+            lsp::check_lsp_available,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

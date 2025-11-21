@@ -63,7 +63,7 @@ impl LspServer {
         let stdin = child.stdin.take().ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No stdin"))?;
         let stdout = child.stdout.take().ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No stdout"))?;
 
-        let proc = Arc::new(Mutex::new(LspProcess { child }));
+        let _proc = Arc::new(Mutex::new(LspProcess { child }));
         
         // Separate stdin and stdout - NO SHARED MUTEX!
         let stdin = Arc::new(Mutex::new(stdin));
@@ -77,7 +77,6 @@ impl LspServer {
         
         eprintln!("[LSP] WebSocket server bound to port {}", port);
 
-        let proc_clone = proc.clone();
         let clients_clone = clients.clone();
 
         // Use oneshot to ensure WebSocket server is ready
@@ -342,5 +341,44 @@ pub async fn detect_project_type(path: String) -> Result<ProjectInfo, String> {
     }
     
     Err("unknown".to_string())
+}
+
+#[tauri::command]
+pub async fn check_lsp_available(language: String) -> Result<bool, String> {
+    use std::process::Command;
+    
+    let (cmd_name, args) = match language.as_str() {
+        "rust" => ("rust-analyzer", vec!["--version"]),
+        "go" => ("gopls", vec!["version"]),
+        _ => return Err(format!("Unknown language: {}", language)),
+    };
+    
+    match Command::new(cmd_name).args(&args).output() {
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            
+            // Check if stderr contains "error" or "Error" (case-insensitive)
+            let has_error = stderr.to_lowercase().contains("error");
+            
+            // Also check if the command actually succeeded
+            let success = output.status.success() && !has_error;
+            
+            if !success {
+                eprintln!("[LSP] {} check failed:", cmd_name);
+                eprintln!("  Exit code: {:?}", output.status.code());
+                eprintln!("  Stderr: {}", stderr);
+                eprintln!("  Stdout: {}", stdout);
+            } else {
+                eprintln!("[LSP] {} available: {}", cmd_name, stdout.trim());
+            }
+            
+            Ok(success)
+        }
+        Err(e) => {
+            eprintln!("[LSP] {} not found in PATH: {}", cmd_name, e);
+            Ok(false)
+        }
+    }
 }
 

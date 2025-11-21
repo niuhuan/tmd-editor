@@ -9,6 +9,8 @@ interface StoredSettings {
   autoSave: AutoSaveMode;
   autoSaveDelay: number;
   markdownDefaultMode: MarkdownViewMode;
+  enableRustLsp: boolean;
+  enableGoLsp: boolean;
 }
 
 const DEFAULT_SETTINGS: StoredSettings = {
@@ -17,6 +19,8 @@ const DEFAULT_SETTINGS: StoredSettings = {
   autoSave: 'afterDelay',  // Default to auto save
   autoSaveDelay: 100,  // Fast auto save
   markdownDefaultMode: 'source',  // Default to source mode
+  enableRustLsp: false,  // Default off - user must enable
+  enableGoLsp: false,     // Default off - user must enable
 };
 
 let store: Store | null = null;
@@ -35,6 +39,8 @@ export function usePersistedSettings() {
     autoSave: DEFAULT_SETTINGS.autoSave,
     autoSaveDelay: DEFAULT_SETTINGS.autoSaveDelay,
     markdownDefaultMode: DEFAULT_SETTINGS.markdownDefaultMode,
+    enableRustLsp: DEFAULT_SETTINGS.enableRustLsp,
+    enableGoLsp: DEFAULT_SETTINGS.enableGoLsp,
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -52,6 +58,8 @@ export function usePersistedSettings() {
       const savedAutoSave = await storeInstance.get<AutoSaveMode>('autoSave');
       const savedAutoSaveDelay = await storeInstance.get<number>('autoSaveDelay');
       const savedMarkdownDefaultMode = await storeInstance.get<MarkdownViewMode>('markdownDefaultMode');
+      const savedEnableRustLsp = await storeInstance.get<boolean>('enableRustLsp');
+      const savedEnableGoLsp = await storeInstance.get<boolean>('enableGoLsp');
 
       if (savedTheme) {
         setTheme(savedTheme);
@@ -63,6 +71,8 @@ export function usePersistedSettings() {
         autoSave: savedAutoSave ?? prev.autoSave,
         autoSaveDelay: savedAutoSaveDelay ?? prev.autoSaveDelay,
         markdownDefaultMode: savedMarkdownDefaultMode ?? prev.markdownDefaultMode,
+        enableRustLsp: savedEnableRustLsp ?? prev.enableRustLsp,
+        enableGoLsp: savedEnableGoLsp ?? prev.enableGoLsp,
       }));
 
       setIsLoaded(true);
@@ -91,6 +101,8 @@ export function usePersistedSettings() {
       await storeInstance.set('autoSave', newSettings.autoSave);
       await storeInstance.set('autoSaveDelay', newSettings.autoSaveDelay);
       await storeInstance.set('markdownDefaultMode', newSettings.markdownDefaultMode);
+      await storeInstance.set('enableRustLsp', newSettings.enableRustLsp);
+      await storeInstance.set('enableGoLsp', newSettings.enableGoLsp);
       await storeInstance.save();
     } catch (error) {
       console.error('Failed to save app settings:', error);
