@@ -24,12 +24,64 @@ function App() {
     setTheme(themeMode === 'light' ? 'dark' : 'light');
   };
 
-  const getFileType = (filename: string): 'txt' | 'markdown' | 'image' | 'unsupported' => {
-    const ext = filename.toLowerCase().split('.').pop();
-    if (ext === 'txt') return 'txt';
+  const getFileType = (filename: string): OpenFile['type'] => {
+    const ext = filename.toLowerCase().split('.').pop() || '';
+    
+    // Image files
+    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext)) {
+      return 'image';
+    }
+    
+    // JavaScript/TypeScript
+    if (ext === 'js' || ext === 'mjs' || ext === 'cjs') return 'javascript';
+    if (ext === 'ts' || ext === 'mts' || ext === 'cts') return 'typescript';
+    if (ext === 'jsx') return 'jsx';
+    if (ext === 'tsx') return 'tsx';
+    
+    // Python
+    if (ext === 'py' || ext === 'pyw') return 'python';
+    
+    // Rust
+    if (ext === 'rs') return 'rust';
+    
+    // Go
+    if (ext === 'go') return 'go';
+    
+    // Java
+    if (ext === 'java') return 'java';
+    
+    // C/C++/C#
+    if (ext === 'cpp' || ext === 'cc' || ext === 'cxx' || ext === 'hpp' || ext === 'h++') return 'cpp';
+    if (ext === 'c' || ext === 'h') return 'c';
+    if (ext === 'cs') return 'csharp';
+    
+    // PHP
+    if (ext === 'php' || ext === 'phtml') return 'php';
+    
+    // HTML/CSS/SCSS/SASS/LESS
+    if (ext === 'html' || ext === 'htm') return 'html';
+    if (ext === 'css') return 'css';
+    if (ext === 'scss') return 'scss';
+    if (ext === 'sass') return 'sass';
+    if (ext === 'less') return 'less';
+    
+    // JSON/XML/YAML/TOML
+    if (ext === 'json') return 'json';
+    if (ext === 'xml' || ext === 'xsl' || ext === 'xsd') return 'xml';
+    if (ext === 'yaml' || ext === 'yml') return 'yaml';
+    if (ext === 'toml') return 'toml';
+    
+    // Markdown
     if (ext === 'md' || ext === 'markdown') return 'markdown';
-    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg', 'ico'].includes(ext || '')) return 'image';
-    return 'unsupported';
+    
+    // SQL
+    if (ext === 'sql') return 'sql';
+    
+    // Plain text
+    if (ext === 'txt' || ext === 'log' || ext === '') return 'txt';
+    
+    // Default to plain text for unknown extensions
+    return 'plaintext';
   };
 
   const handleFileClick = async (path: string) => {
@@ -57,8 +109,8 @@ function App() {
       if (fileType === 'image') {
         // Read image as base64
         content = await invoke<string>('read_image_file', { path });
-      } else if (fileType === 'txt' || fileType === 'markdown') {
-        // Read text file
+      } else if (fileType !== 'unsupported') {
+        // Read all text-based files
         try {
           content = await invoke<string>('read_file_content', { path });
         } catch (error) {
@@ -202,6 +254,13 @@ function App() {
     }
   };
 
+  const saveAllFiles = async () => {
+    const dirtyFiles = openFiles.filter(f => f.isDirty && !f.isUnsupported && f.type !== 'image');
+    for (const file of dirtyFiles) {
+      await saveFile(file.path);
+    }
+  };
+
   const handleOpenSettings = () => {
     setShowSettings(true);
     setActiveFile(null);
@@ -335,3 +394,4 @@ function App() {
 }
 
 export default App;
+

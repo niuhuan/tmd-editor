@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import Editor from '@monaco-editor/react';
-import type { editor as MonacoEditor } from 'monaco-editor';
 import { marked } from 'marked';
 import { 
   MDXEditor, 
@@ -30,6 +28,7 @@ import {
 import '@mdxeditor/editor/style.css';
 import { OpenFile } from '../types';
 import { useTheme } from '../theme';
+import { CodeMirrorEditor } from './CodeMirrorEditor';
 import './EditorPane.css';
 
 interface EditorPaneProps {
@@ -41,14 +40,10 @@ interface EditorPaneProps {
 const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onContentChange }) => {
   const { mode } = useTheme();
   const [previewHtml, setPreviewHtml] = useState<string>('');
-  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
-  const isScrollingRef = useRef<{ editor: boolean; preview: boolean }>({ editor: false, preview: false });
 
-  const handleMonacoChange = (value: string | undefined) => {
-    if (value !== undefined) {
-      onContentChange(file.path, value);
-    }
+  const handleCodeChange = (value: string) => {
+    onContentChange(file.path, value);
   };
 
   const handleMarkdownChange = (value: string) => {
@@ -62,104 +57,6 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
       setPreviewHtml(html as string);
     }
   }, [file.content, file.type, file.markdownViewMode]);
-
-  // Setup scroll synchronization for split view
-  useEffect(() => {
-    if (file.type !== 'markdown' || file.markdownViewMode !== 'split') {
-      return;
-    }
-
-    let editorScrollDisposable: any = null;
-    let previewScrollHandler: ((e: Event) => void) | null = null;
-
-    // Wait for both editor and preview to be ready, and for DOM to update
-    const timer = setTimeout(() => {
-      const editor = editorRef.current;
-      const preview = previewRef.current;
-
-      if (!editor || !preview) {
-        return;
-      }
-
-      // Sync preview scroll when editor scrolls
-      editorScrollDisposable = editor.onDidScrollChange((e) => {
-        if (isScrollingRef.current.preview) return;
-        
-        isScrollingRef.current.editor = true;
-        
-        const scrollTop = e.scrollTop;
-        const scrollHeight = editor.getScrollHeight();
-        const clientHeight = editor.getLayoutInfo().height;
-        
-        const maxScroll = scrollHeight - clientHeight;
-        if (maxScroll <= 0) {
-          isScrollingRef.current.editor = false;
-          return;
-        }
-        
-        const scrollPercentage = scrollTop / maxScroll;
-        
-        const previewMaxScroll = preview.scrollHeight - preview.clientHeight;
-        if (previewMaxScroll > 0) {
-          preview.scrollTop = scrollPercentage * previewMaxScroll;
-        }
-        
-        setTimeout(() => {
-          isScrollingRef.current.editor = false;
-        }, 100);
-      });
-
-      // Sync editor scroll when preview scrolls
-      previewScrollHandler = () => {
-        if (isScrollingRef.current.editor) return;
-        
-        isScrollingRef.current.preview = true;
-        
-        const scrollTop = preview.scrollTop;
-        const scrollHeight = preview.scrollHeight;
-        const clientHeight = preview.clientHeight;
-        
-        const maxScroll = scrollHeight - clientHeight;
-        if (maxScroll <= 0) {
-          isScrollingRef.current.preview = false;
-          return;
-        }
-        
-        const scrollPercentage = scrollTop / maxScroll;
-        
-        const editorMaxScroll = editor.getScrollHeight() - editor.getLayoutInfo().height;
-        if (editorMaxScroll > 0) {
-          editor.setScrollTop(scrollPercentage * editorMaxScroll);
-        }
-        
-        setTimeout(() => {
-          isScrollingRef.current.preview = false;
-        }, 100);
-      };
-
-      preview.addEventListener('scroll', previewScrollHandler);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (editorScrollDisposable) {
-        editorScrollDisposable.dispose();
-      }
-      if (previewScrollHandler && previewRef.current) {
-        previewRef.current.removeEventListener('scroll', previewScrollHandler);
-      }
-    };
-  }, [file.type, file.markdownViewMode, previewHtml]);
-
-  // Auto-focus editor when tab becomes active
-  useEffect(() => {
-    if (isActive && editorRef.current) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        editorRef.current?.focus();
-      }, 50);
-    }
-  }, [isActive]);
 
   // Image upload handler - for now, just use the provided URL/path directly
   const imageUploadHandler = async (image: File): Promise<string> => {
@@ -218,37 +115,15 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
     const viewMode = file.markdownViewMode || 'rich';
     
     if (viewMode === 'source') {
-      // Show source code in Monaco Editor
+      // Show source code in CodeMirror
       return (
-        <div className={`editor-pane monaco ${mode}`}>
-          <Editor
-            height="100%"
-            path={file.path}
-            defaultLanguage="markdown"
-            defaultValue={file.content}
-            onChange={handleMonacoChange}
-            onMount={(editor) => {
-              editorRef.current = editor;
-              if (isActive) {
-                editor.focus();
-              }
-            }}
-            theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: 'on',
-              wordWrap: 'off',
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              scrollbar: {
-                vertical: 'visible',
-                horizontal: 'visible',
-                useShadows: false,
-                verticalScrollbarSize: 10,
-                horizontalScrollbarSize: 10,
-              },
-            }}
+        <div className={`editor-pane codemirror ${mode}`}>
+          <CodeMirrorEditor
+            value={file.content}
+            language="markdown"
+            theme={mode}
+            onChange={handleCodeChange}
+            autoFocus={isActive}
           />
         </div>
       );
@@ -259,34 +134,12 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
       return (
         <div className={`editor-pane split-view ${mode}`}>
           <div className="split-editor">
-            <Editor
-              height="100%"
-              path={file.path}
-              defaultLanguage="markdown"
-              defaultValue={file.content}
-              onChange={handleMonacoChange}
-              onMount={(editor) => {
-                editorRef.current = editor;
-                if (isActive) {
-                  editor.focus();
-                }
-              }}
-              theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                wordWrap: 'off',
-                automaticLayout: true,
-                scrollBeyondLastLine: false,
-                scrollbar: {
-                  vertical: 'visible',
-                  horizontal: 'visible',
-                  useShadows: false,
-                  verticalScrollbarSize: 10,
-                  horizontalScrollbarSize: 10,
-                },
-              }}
+            <CodeMirrorEditor
+              value={file.content}
+              language="markdown"
+              theme={mode}
+              onChange={handleCodeChange}
+              autoFocus={isActive}
             />
           </div>
           <div 
@@ -325,9 +178,10 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
                   <ListsToggle />
                   <Separator />
                   <InsertTable />
-                  <InsertThematicBreak />
                   <Separator />
                   <InsertCodeBlock />
+                  <Separator />
+                  <InsertThematicBreak />
                 </>
               ),
             }),
@@ -338,49 +192,25 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
             markdownShortcutPlugin(),
             linkPlugin(),
             linkDialogPlugin(),
-            imagePlugin({
-              imageUploadHandler,
-            }),
+            imagePlugin({ imageUploadHandler }),
             tablePlugin(),
-            codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-            codeMirrorPlugin({ codeBlockLanguages: { txt: 'Text', js: 'JavaScript', ts: 'TypeScript', jsx: 'JSX', tsx: 'TSX', css: 'CSS', html: 'HTML', json: 'JSON', python: 'Python', rust: 'Rust' } }),
+            codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
+            codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', ts: 'TypeScript', py: 'Python', rs: 'Rust', go: 'Go' } }),
           ]}
         />
       </div>
     );
   }
 
-  // Text editor (Monaco)
+  // All other file types - use CodeMirror with language support
   return (
-    <div className={`editor-pane monaco ${mode}`}>
-      <Editor
-        height="100%"
-        path={file.path}
-        defaultLanguage="plaintext"
-        defaultValue={file.content}
-        onChange={handleMonacoChange}
-        onMount={(editor) => {
-          editorRef.current = editor;
-          if (isActive) {
-            editor.focus();
-          }
-        }}
-        theme={mode === 'dark' ? 'vs-dark' : 'vs-light'}
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          lineNumbers: 'on',
-          wordWrap: 'off',  // Disable word wrap to avoid IME composition issues
-          automaticLayout: true,
-          scrollBeyondLastLine: false,
-          scrollbar: {
-            vertical: 'visible',
-            horizontal: 'visible',
-            useShadows: false,
-            verticalScrollbarSize: 10,
-            horizontalScrollbarSize: 10,
-          },
-        }}
+    <div className={`editor-pane codemirror ${mode}`}>
+      <CodeMirrorEditor
+        value={file.content}
+        language={file.type}
+        theme={mode}
+        onChange={handleCodeChange}
+        autoFocus={isActive}
       />
     </div>
   );
@@ -397,4 +227,3 @@ export const EditorPane = React.memo(EditorPaneComponent, (prevProps, nextProps)
     prevProps.isActive === nextProps.isActive
   );
 });
-
