@@ -22,6 +22,7 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState<number>(250);
   const [isResizing, setIsResizing] = useState<boolean>(false);
   const [showTerminal, setShowTerminal] = useState<boolean>(false);
+  const [terminalInitialized, setTerminalInitialized] = useState<boolean>(false);
   const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null);
   const autoSaveTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -317,7 +318,14 @@ function App() {
   };
 
   const handleToggleTerminal = () => {
-    setShowTerminal(prev => !prev);
+    setShowTerminal(prev => {
+      const newValue = !prev;
+      // Initialize terminal on first open
+      if (newValue && !terminalInitialized) {
+        setTerminalInitialized(true);
+      }
+      return newValue;
+    });
   };
 
   const handleWorkspaceChange = (path: string | null) => {
@@ -449,7 +457,11 @@ function App() {
               onMarkdownViewModeToggle={handleMarkdownViewModeToggle}
               onMarkdownViewModeChange={handleMarkdownViewModeChange}
             />
-            {showTerminal && <TerminalPanel workingDirectory={currentWorkspace} />}
+            {terminalInitialized && (
+              <div style={{ display: showTerminal ? 'flex' : 'none', flexDirection: 'column' }}>
+                <TerminalPanel workingDirectory={currentWorkspace} />
+              </div>
+            )}
           </div>
         </div>
         <StatusBar 
