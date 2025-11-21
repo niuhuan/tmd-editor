@@ -1,19 +1,43 @@
 .terminal-panel {
   display: flex;
   flex-direction: column;
-  height: 300px;
   flex-shrink: 0;
-  border-top: 1px solid;
+  position: relative;
 }
 
 .terminal-panel.light {
   background-color: #ffffff;
-  border-top-color: #e5e5e5;
 }
 
 .terminal-panel.dark {
   background-color: #1e1e1e;
-  border-top-color: #3e3e42;
+}
+
+.terminal-resizer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: row-resize;
+  z-index: 100;
+}
+
+.terminal-resizer::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+}
+
+.terminal-resizer.light {
+  border-top: 1px solid #e5e5e5;
+}
+
+.terminal-resizer.dark {
+  border-top: 1px solid #3e3e42;
 }
 
 .terminal-tabs {

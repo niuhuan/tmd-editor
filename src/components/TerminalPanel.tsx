@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { Terminal } from './Terminal';
@@ -22,6 +22,8 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({ workingDirectory }
   ]);
   const [activeTerminalId, setActiveTerminalId] = useState<string>('1');
   const [initializedTerminals, setInitializedTerminals] = useState<Set<string>>(new Set(['1']));
+  const [panelHeight, setPanelHeight] = useState<number>(300);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const nextIdRef = useRef(2);
 
   const handleNewTerminal = () => {
@@ -73,8 +75,67 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({ workingDirectory }
     setInitializedTerminals(prev => new Set([...prev, id]));
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    // Calculate new height from bottom of window
+    const newHeight = window.innerHeight - e.clientY;
+    
+    // Set min and max height constraints
+    if (newHeight >= 100 && newHeight <= window.innerHeight - 200) {
+      setPanelHeight(newHeight);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+    // Trigger terminal resize after dragging stops
+    window.dispatchEvent(new Event('resize'));
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'row-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
+
+  // Notify terminals when panel height changes
+  useEffect(() => {
+    if (!isResizing) {
+      // Small delay to ensure DOM has updated
+      const timer = setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [panelHeight, isResizing]);
+
   return (
-    <div className={`terminal-panel ${mode}`}>
+    <div className={`terminal-panel ${mode}`} style={{ height: `${panelHeight}px` }}>
+      <div 
+        className={`terminal-resizer ${mode}`}
+        onMouseDown={handleMouseDown}
+      />
       <div className="terminal-tabs">
         <div className="terminal-tab-list">
           {terminals.map(terminal => (
