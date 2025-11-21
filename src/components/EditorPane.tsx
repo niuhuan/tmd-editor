@@ -215,6 +215,7 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
             theme={mode}
             onChange={handleCodeChange}
             autoFocus={isActive}
+            filePath={file.path}
           />
         </div>
       );
@@ -231,6 +232,7 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
               theme={mode}
               onChange={handleCodeChange}
               autoFocus={isActive}
+              filePath={file.path}
             />
           </div>
           <div 
@@ -302,6 +304,7 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
         theme={mode}
         onChange={handleCodeChange}
         autoFocus={isActive}
+        filePath={file.path}
       />
     </div>
   );

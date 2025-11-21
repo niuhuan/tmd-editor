@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
+import { Extension } from '@codemirror/state';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 import { rust } from '@codemirror/lang-rust';
@@ -19,6 +20,8 @@ import { sql } from '@codemirror/lang-sql';
 import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { FileType } from '../types';
+import { useLsp } from '../contexts/LspContext';
+import { languageIdForPath, fileUri } from '../services/lsp';
 
 interface CodeMirrorEditorProps {
   value: string;
@@ -27,6 +30,7 @@ interface CodeMirrorEditorProps {
   onChange: (value: string) => void;
   readOnly?: boolean;
   autoFocus?: boolean;
+  filePath?: string;
 }
 
 // Map file types to CodeMirror language extensions
@@ -86,9 +90,55 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   onChange,
   readOnly = false,
   autoFocus = false,
+  filePath,
 }) => {
   const editorViewRef = useRef<EditorView | null>(null);
-  const extensions = [getLanguageExtension(language)];
+  const { manager } = useLsp();
+  const [extensions, setExtensions] = useState<Extension[]>([getLanguageExtension(language)]);
+
+  // Setup LSP if applicable
+  useEffect(() => {
+    async function setupLsp() {
+      if (!filePath) {
+        setExtensions([getLanguageExtension(language)]);
+        return;
+      }
+
+      const langId = languageIdForPath(filePath);
+      if (!langId) {
+        setExtensions([getLanguageExtension(language)]);
+        return;
+      }
+
+      try {
+        const projectInfo = await manager.detectProject(filePath);
+        if (!projectInfo) {
+          console.log('[CodeMirror] No project found for:', filePath);
+          setExtensions([getLanguageExtension(language)]);
+          return;
+        }
+
+        console.log('[CodeMirror] Setting up LSP for:', projectInfo);
+        const client = manager.getClient(langId, projectInfo.root_path);
+        if (!client) {
+          console.log('[CodeMirror] LSP client not ready yet for:', langId);
+          setExtensions([getLanguageExtension(language)]);
+          return;
+        }
+
+        const uri = fileUri(filePath);
+        const lspPlugin = client.plugin(uri, langId);
+        
+        setExtensions([getLanguageExtension(language), lspPlugin]);
+        console.log('[CodeMirror] LSP setup complete');
+      } catch (e) {
+        console.error('[CodeMirror] LSP setup failed:', e);
+        setExtensions([getLanguageExtension(language)]);
+      }
+    }
+
+    setupLsp();
+  }, [filePath, language, manager]);
 
   // Auto-focus when component becomes active
   useEffect(() => {

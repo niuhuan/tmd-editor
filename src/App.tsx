@@ -7,9 +7,11 @@ import { Sidebar } from "./components/Sidebar";
 import { Editor } from "./components/Editor";
 import { StatusBar } from "./components/StatusBar";
 import { TerminalPanel } from "./components/TerminalPanel";
+import { LspManager } from "./components/LspManager";
 import { AppSettings } from "./components/Settings";
 import { OpenFile } from "./types";
 import { usePersistedSettings } from "./hooks/useSettings";
+import { LspProvider } from "./contexts/LspContext";
 import "./App.css";
 
 function App() {
@@ -24,6 +26,7 @@ function App() {
   const [showTerminal, setShowTerminal] = useState<boolean>(false);
   const [terminalInitialized, setTerminalInitialized] = useState<boolean>(false);
   const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null);
+  const [activeLsps, setActiveLsps] = useState<string[]>([]); // e.g., ["rust", "go"]
   const autoSaveTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const toggleTheme = () => {
@@ -332,6 +335,10 @@ function App() {
     setCurrentWorkspace(path);
   };
 
+  const handleLspStatusChange = (lsps: string[]) => {
+    setActiveLsps(lsps);
+  };
+
   const handleMarkdownViewModeToggle = (path: string) => {
     setOpenFiles(prev => prev.map(f => {
       if (f.path === path && f.type === 'markdown') {
@@ -419,14 +426,19 @@ function App() {
   }
 
   return (
-    <ThemeContext.Provider value={{ mode: themeMode, toggleTheme }}>
-      <div 
-        className={`app ${themeMode}`}
-        style={{ 
-          backgroundColor: theme.colors.background,
-          color: theme.colors.text 
-        }}
-      >
+    <LspProvider>
+      <ThemeContext.Provider value={{ mode: themeMode, toggleTheme }}>
+        <LspManager 
+          workspacePath={currentWorkspace}
+          onLspStatusChange={handleLspStatusChange}
+        />
+        <div 
+          className={`app ${themeMode}`}
+          style={{ 
+            backgroundColor: theme.colors.background,
+            color: theme.colors.text 
+          }}
+        >
         <div className="app-container">
           <ActivityBar onSettingsClick={handleOpenSettings} />
           <div className="app-sidebar" style={{ width: `${sidebarWidth}px` }}>
@@ -468,9 +480,11 @@ function App() {
           activeFile={openFiles.find(f => f.path === activeFile) || null}
           showTerminal={showTerminal}
           onToggleTerminal={handleToggleTerminal}
+          activeLsps={activeLsps}
         />
-      </div>
-    </ThemeContext.Provider>
+        </div>
+      </ThemeContext.Provider>
+    </LspProvider>
   );
 }
 

@@ -8,10 +8,32 @@ interface StatusBarProps {
   activeFile: OpenFile | null;
   showTerminal?: boolean;
   onToggleTerminal?: () => void;
+  activeLsps?: string[];
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ activeFile, showTerminal, onToggleTerminal }) => {
+export const StatusBar: React.FC<StatusBarProps> = ({ 
+  activeFile, 
+  showTerminal, 
+  onToggleTerminal,
+  activeLsps = []
+}) => {
   const { mode } = useTheme();
+
+  const getLspIcon = (lsp: string): string => {
+    switch (lsp) {
+      case 'rust': return '🦀';
+      case 'go': return '🐹';
+      default: return '📝';
+    }
+  };
+
+  const getLspName = (lsp: string): string => {
+    switch (lsp) {
+      case 'rust': return 'rust-analyzer';
+      case 'go': return 'gopls';
+      default: return lsp;
+    }
+  };
 
   const getFileTypeLabel = (file: OpenFile | null): string => {
     if (!file) return '';
@@ -65,6 +87,19 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeFile, showTerminal, 
     <div className={`status-bar ${mode}`}>
       <div className="status-bar-left">
         <span className="status-bar-item">TMD Editor v0.1.0</span>
+        {activeLsps.length > 0 && (
+          <>
+            {activeLsps.map((lsp) => (
+              <span 
+                key={lsp} 
+                className="status-bar-item lsp-indicator"
+                title={`${getLspName(lsp)} active`}
+              >
+                {getLspIcon(lsp)} {getLspName(lsp)}
+              </span>
+            ))}
+          </>
+        )}
       </div>
       <div className="status-bar-right">
         {activeFile && (

@@ -7,6 +7,8 @@ use tauri::{Manager, Emitter, State};
 mod pty;
 use pty::PtySession;
 
+mod lsp;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct FileEntry {
     name: String,
@@ -259,6 +261,7 @@ pub fn run() {
         .manage(PtyState {
             sessions: Arc::new(Mutex::new(std::collections::HashMap::new())),
         })
+        .manage(lsp::LspState::default())
         .setup(|app| {
             // Create menu items
             let open_folder = MenuItemBuilder::with_id("open-folder", "Open Folder...")
@@ -397,6 +400,9 @@ pub fn run() {
             start_pty_session,
             write_to_pty,
             stop_pty_session,
+            lsp::start_lsp_server,
+            lsp::stop_lsp_server,
+            lsp::detect_project_type,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
