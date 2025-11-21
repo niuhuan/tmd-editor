@@ -18,11 +18,54 @@ function App() {
   const [openFolderTrigger, setOpenFolderTrigger] = useState<number>(0);
   const [openFileTrigger, setOpenFileTrigger] = useState<number>(0);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(250);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
   const autoSaveTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const toggleTheme = () => {
     setTheme(themeMode === 'light' ? 'dark' : 'light');
   };
+
+  const handleMouseDown = () => {
+    setIsResizing(true);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    // Calculate new width (subtract ActivityBar width of 48px)
+    const newWidth = e.clientX - 48;
+    
+    // Set min and max width constraints
+    if (newWidth >= 180 && newWidth <= 600) {
+      setSidebarWidth(newWidth);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove as any);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove as any);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove as any);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
 
   const getFileType = (filename: string): OpenFile['type'] => {
     const ext = filename.toLowerCase().split('.').pop() || '';
@@ -362,7 +405,7 @@ function App() {
       >
         <div className="app-container">
           <ActivityBar onSettingsClick={handleOpenSettings} />
-          <div className="app-sidebar">
+          <div className="app-sidebar" style={{ width: `${sidebarWidth}px` }}>
             <Sidebar 
               onFileClick={handleFileClick}
               openFolderTrigger={openFolderTrigger}
@@ -371,6 +414,10 @@ function App() {
               activeFilePath={activeFile}
             />
           </div>
+          <div 
+            className={`sidebar-resizer ${themeMode} ${isResizing ? 'resizing' : ''}`}
+            onMouseDown={handleMouseDown}
+          />
           <div className="app-main">
             <Editor 
               openFiles={openFiles}
