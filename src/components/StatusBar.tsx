@@ -1,13 +1,16 @@
 import React from 'react';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import { OpenFile } from '../types';
 import { useTheme } from '../theme';
 import './StatusBar.css';
 
 interface StatusBarProps {
   activeFile: OpenFile | null;
+  showTerminal?: boolean;
+  onToggleTerminal?: () => void;
 }
 
-export const StatusBar: React.FC<StatusBarProps> = ({ activeFile }) => {
+export const StatusBar: React.FC<StatusBarProps> = ({ activeFile, showTerminal, onToggleTerminal }) => {
   const { mode } = useTheme();
 
   const getFileTypeLabel = (file: OpenFile | null): string => {
@@ -66,6 +69,15 @@ export const StatusBar: React.FC<StatusBarProps> = ({ activeFile }) => {
       <div className="status-bar-right">
         {activeFile && (
           <span className="status-bar-item">{getFileTypeLabel(activeFile)}</span>
+        )}
+        {onToggleTerminal && (
+          <button
+            className={`status-bar-btn ${mode} ${showTerminal ? 'active' : ''}`}
+            onClick={onToggleTerminal}
+            title="Toggle Terminal"
+          >
+            <TerminalIcon fontSize="small" />
+          </button>
         )}
       </div>
     </div>

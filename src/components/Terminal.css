@@ -1,0 +1,140 @@
+.terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
+  font-size: 13px;
+}
+
+.terminal.light {
+  background-color: #ffffff;
+}
+
+.terminal.dark {
+  background-color: #1e1e1e;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 35px;
+  padding: 0 12px;
+  border-bottom: 1px solid;
+  flex-shrink: 0;
+}
+
+.terminal.light .terminal-header {
+  background-color: #f3f3f3;
+  border-bottom-color: #e5e5e5;
+}
+
+.terminal.dark .terminal-header {
+  background-color: #252526;
+  border-bottom-color: #3e3e42;
+}
+
+.terminal-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal.light .terminal-title {
+  color: #616161;
+}
+
+.terminal.dark .terminal-title {
+  color: #858585;
+}
+
+.terminal-status.inactive {
+  font-size: 10px;
+  font-weight: normal;
+  text-transform: none;
+  opacity: 0.7;
+}
+
+.terminal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-family: inherit;
+  transition: background-color 0.2s;
+}
+
+.terminal-btn.light {
+  color: #616161;
+}
+
+.terminal-btn.dark {
+  color: #858585;
+}
+
+.terminal-btn.light:hover {
+  background-color: #e8e8e8;
+}
+
+.terminal-btn.dark:hover {
+  background-color: #2a2d2e;
+}
+
+.terminal-xterm {
+  flex: 1;
+  overflow: hidden;
+  padding: 4px;
+}
+
+/* Override xterm.js default styles to match our theme */
+.terminal-xterm .xterm {
+  height: 100%;
+  padding: 0;
+}
+
+.terminal-xterm .xterm-viewport {
+  overflow-y: auto !important;
+}
+
+/* Custom scrollbar for xterm */
+.terminal-xterm .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+
+.terminal.light .terminal-xterm .xterm-viewport::-webkit-scrollbar-track {
+  background: #f3f3f3;
+}
+
+.terminal.dark .terminal-xterm .xterm-viewport::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.terminal.light .terminal-xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 5px;
+}
+
+.terminal.dark .terminal-xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+}
+
+.terminal.light .terminal-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.terminal.dark .terminal-xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #4f4f4f;
+}

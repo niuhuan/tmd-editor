@@ -15,9 +15,10 @@ interface SidebarProps {
   openFileTrigger?: number;
   showHiddenFiles?: boolean;
   activeFilePath?: string | null;
+  onWorkspaceChange?: (path: string | null) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, openFileTrigger, showHiddenFiles = true, activeFilePath }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger, openFileTrigger, showHiddenFiles = true, activeFilePath, onWorkspaceChange }) => {
   const [rootPath, setRootPath] = useState<string | null>(null);
   const [folderName, setFolderName] = useState<string>('');
   const [selectedEntry, setSelectedEntry] = useState<FileEntry | null>(null);
@@ -74,6 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
           is_directory: true,
           is_file: false,
         });
+        // Notify parent component
+        if (onWorkspaceChange) {
+          onWorkspaceChange(selected);
+        }
       }
     } catch (error) {
       console.error('Failed to open folder:', error);

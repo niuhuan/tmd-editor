@@ -1,7 +1,11 @@
 use std::fs;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
-use tauri::{Manager, Emitter};
+use tauri::{Manager, Emitter, State};
+
+mod pty;
+use pty::PtySession;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct FileEntry {
@@ -153,6 +157,95 @@ async fn save_file(path: String, content: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+async fn execute_command(command: String, working_dir: Option<String>) -> Result<String, String> {
+    use std::process::Command;
+    
+    // Parse command into parts (simple split by whitespace)
+    let parts: Vec<&str> = command.split_whitespace().collect();
+    if parts.is_empty() {
+        return Err("Empty command".to_string());
+    }
+    
+    let program = parts[0];
+    let args = &parts[1..];
+    
+    let mut cmd = Command::new(program);
+    cmd.args(args);
+    
+    // Set working directory if provided
+    if let Some(dir) = working_dir {
+        cmd.current_dir(dir);
+    }
+    
+    // Execute command
+    match cmd.output() {
+        Ok(output) => {
+            if output.status.success() {
+                Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            } else {
+                Err(String::from_utf8_lossy(&output.stderr).to_string())
+            }
+        },
+        Err(e) => Err(format!("Failed to execute command: {}", e)),
+    }
+}
+
+// PTY Session state - support multiple sessions
+struct PtyState {
+    sessions: Arc<Mutex<std::collections::HashMap<String, PtySession>>>,
+}
+
+#[tauri::command]
+async fn start_pty_session(
+    app_handle: tauri::AppHandle,
+    state: State<'_, PtyState>,
+    terminal_id: String,
+    working_dir: Option<String>,
+) -> Result<(), String> {
+    let mut sessions = state.sessions.lock().map_err(|e| format!("Failed to lock state: {}", e))?;
+    
+    // Kill old session if it exists for this terminal
+    if let Some(old_session) = sessions.remove(&terminal_id) {
+        let _ = old_session.kill(); // Ignore errors if already dead
+    }
+    
+    // Create new session with terminal-specific event channel
+    let session = PtySession::new(app_handle, terminal_id.clone(), working_dir)?;
+    sessions.insert(terminal_id, session);
+    Ok(())
+}
+
+#[tauri::command]
+async fn write_to_pty(
+    state: State<'_, PtyState>,
+    terminal_id: String,
+    data: String,
+) -> Result<(), String> {
+    let sessions = state.sessions.lock().map_err(|e| format!("Failed to lock state: {}", e))?;
+    if let Some(session) = sessions.get(&terminal_id) {
+        session.write(&data)?;
+        Ok(())
+    } else {
+        Err(format!("No active PTY session for terminal {}", terminal_id))
+    }
+}
+
+#[tauri::command]
+async fn stop_pty_session(
+    state: State<'_, PtyState>,
+    terminal_id: String,
+) -> Result<(), String> {
+    let mut sessions = state.sessions.lock().map_err(|e| format!("Failed to lock state: {}", e))?;
+    
+    // Kill and remove the session
+    if let Some(session) = sessions.remove(&terminal_id) {
+        let _ = session.kill(); // Ignore errors if already dead
+    }
+    
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_imports)]
@@ -163,6 +256,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .manage(PtyState {
+            sessions: Arc::new(Mutex::new(std::collections::HashMap::new())),
+        })
         .setup(|app| {
             // Create menu items
             let open_folder = MenuItemBuilder::with_id("open-folder", "Open Folder...")
@@ -221,6 +317,16 @@ pub fn run() {
                 .item(&save_all_item)
                 .build()?;
             
+            // Create Terminal menu item
+            let toggle_terminal_item = MenuItemBuilder::with_id("toggle-terminal", "Toggle Terminal")
+                .accelerator("CmdOrCtrl+`")
+                .build(app)?;
+            
+            // Create View menu
+            let view_menu = SubmenuBuilder::new(app, "View")
+                .item(&toggle_terminal_item)
+                .build()?;
+            
             // Create main menu
             let menu = Menu::new(app)?;
             
@@ -241,6 +347,9 @@ pub fn run() {
             
             // Add Edit menu
             menu.append(&edit_menu)?;
+            
+            // Add View menu
+            menu.append(&view_menu)?;
             
             app.set_menu(menu)?;
             
@@ -264,6 +373,9 @@ pub fn run() {
                         "save-all" => {
                             let _ = window.emit("menu-save-all", ());
                         }
+                        "toggle-terminal" => {
+                            let _ = window.emit("menu-toggle-terminal", ());
+                        }
                         _ => {}
                     }
                 }
@@ -281,6 +393,10 @@ pub fn run() {
             delete_path,
             rename_path,
             save_file,
+            execute_command,
+            start_pty_session,
+            write_to_pty,
+            stop_pty_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

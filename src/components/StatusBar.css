@@ -29,3 +29,27 @@
   cursor: default;
 }
 
+.status-bar-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  opacity: 0.8;
+}
+
+.status-bar-btn:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.status-bar-btn.active {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+

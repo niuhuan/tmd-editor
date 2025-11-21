@@ -6,6 +6,7 @@ import { ActivityBar } from "./components/ActivityBar";
 import { Sidebar } from "./components/Sidebar";
 import { Editor } from "./components/Editor";
 import { StatusBar } from "./components/StatusBar";
+import { TerminalPanel } from "./components/TerminalPanel";
 import { AppSettings } from "./components/Settings";
 import { OpenFile } from "./types";
 import { usePersistedSettings } from "./hooks/useSettings";
@@ -20,6 +21,8 @@ function App() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [sidebarWidth, setSidebarWidth] = useState<number>(250);
   const [isResizing, setIsResizing] = useState<boolean>(false);
+  const [showTerminal, setShowTerminal] = useState<boolean>(false);
+  const [currentWorkspace, setCurrentWorkspace] = useState<string | null>(null);
   const autoSaveTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const toggleTheme = () => {
@@ -313,6 +316,14 @@ function App() {
     setShowSettings(false);
   };
 
+  const handleToggleTerminal = () => {
+    setShowTerminal(prev => !prev);
+  };
+
+  const handleWorkspaceChange = (path: string | null) => {
+    setCurrentWorkspace(path);
+  };
+
   const handleMarkdownViewModeToggle = (path: string) => {
     setOpenFiles(prev => prev.map(f => {
       if (f.path === path && f.type === 'markdown') {
@@ -369,12 +380,17 @@ function App() {
       saveAllFiles();
     });
 
+    const unlistenToggleTerminal = listen('menu-toggle-terminal', () => {
+      handleToggleTerminal();
+    });
+
     return () => {
       unlistenOpenFolder.then(fn => fn());
       unlistenOpenFile.then(fn => fn());
       unlistenSettings.then(fn => fn());
       unlistenSave.then(fn => fn());
       unlistenSaveAll.then(fn => fn());
+      unlistenToggleTerminal.then(fn => fn());
     };
   }, [openFiles, activeFile]);
 
@@ -412,6 +428,7 @@ function App() {
               openFileTrigger={openFileTrigger}
               showHiddenFiles={settings.showHiddenFiles}
               activeFilePath={activeFile}
+              onWorkspaceChange={handleWorkspaceChange}
             />
           </div>
           <div 
@@ -432,9 +449,14 @@ function App() {
               onMarkdownViewModeToggle={handleMarkdownViewModeToggle}
               onMarkdownViewModeChange={handleMarkdownViewModeChange}
             />
+            {showTerminal && <TerminalPanel workingDirectory={currentWorkspace} />}
           </div>
         </div>
-        <StatusBar activeFile={openFiles.find(f => f.path === activeFile) || null} />
+        <StatusBar 
+          activeFile={openFiles.find(f => f.path === activeFile) || null}
+          showTerminal={showTerminal}
+          onToggleTerminal={handleToggleTerminal}
+        />
       </div>
     </ThemeContext.Provider>
   );
