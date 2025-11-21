@@ -42,6 +42,8 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
   const { mode } = useTheme();
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const editorScrollerRef = useRef<HTMLDivElement | null>(null);
+  const isScrollingRef = useRef<{ editor: boolean; preview: boolean }>({ editor: false, preview: false });
 
   const handleCodeChange = (value: string) => {
     onContentChange(file.path, value);
@@ -58,6 +60,94 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
       setPreviewHtml(html as string);
     }
   }, [file.content, file.type, file.markdownViewMode]);
+
+  // Setup scroll synchronization for split view
+  useEffect(() => {
+    if (file.type !== 'markdown' || file.markdownViewMode !== 'split') {
+      return;
+    }
+
+    // Wait for DOM to be ready
+    const timer = setTimeout(() => {
+      const preview = previewRef.current;
+      // Find CodeMirror scroller element
+      const editorScroller = document.querySelector('.split-editor .cm-scroller') as HTMLDivElement;
+      
+      if (!editorScroller || !preview) {
+        return;
+      }
+
+      editorScrollerRef.current = editorScroller;
+
+      // Sync preview scroll when editor scrolls
+      const handleEditorScroll = () => {
+        if (isScrollingRef.current.preview || !preview || !editorScroller) return;
+        
+        isScrollingRef.current.editor = true;
+        
+        const scrollTop = editorScroller.scrollTop;
+        const scrollHeight = editorScroller.scrollHeight;
+        const clientHeight = editorScroller.clientHeight;
+        
+        const maxScroll = scrollHeight - clientHeight;
+        if (maxScroll <= 0) {
+          isScrollingRef.current.editor = false;
+          return;
+        }
+        
+        const scrollPercentage = scrollTop / maxScroll;
+        
+        const previewMaxScroll = preview.scrollHeight - preview.clientHeight;
+        if (previewMaxScroll > 0) {
+          preview.scrollTop = scrollPercentage * previewMaxScroll;
+        }
+        
+        setTimeout(() => {
+          isScrollingRef.current.editor = false;
+        }, 100);
+      };
+
+      // Sync editor scroll when preview scrolls
+      const handlePreviewScroll = () => {
+        if (isScrollingRef.current.editor || !preview || !editorScroller) return;
+        
+        isScrollingRef.current.preview = true;
+        
+        const scrollTop = preview.scrollTop;
+        const scrollHeight = preview.scrollHeight;
+        const clientHeight = preview.clientHeight;
+        
+        const maxScroll = scrollHeight - clientHeight;
+        if (maxScroll <= 0) {
+          isScrollingRef.current.preview = false;
+          return;
+        }
+        
+        const scrollPercentage = scrollTop / maxScroll;
+        
+        const editorMaxScroll = editorScroller.scrollHeight - editorScroller.clientHeight;
+        if (editorMaxScroll > 0) {
+          editorScroller.scrollTop = scrollPercentage * editorMaxScroll;
+        }
+        
+        setTimeout(() => {
+          isScrollingRef.current.preview = false;
+        }, 100);
+      };
+
+      editorScroller.addEventListener('scroll', handleEditorScroll);
+      preview.addEventListener('scroll', handlePreviewScroll);
+
+      return () => {
+        editorScroller.removeEventListener('scroll', handleEditorScroll);
+        preview.removeEventListener('scroll', handlePreviewScroll);
+      };
+    }, 150); // Increased delay to ensure CodeMirror is fully rendered
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [file.type, file.markdownViewMode, previewHtml]);
 
   // Image upload handler - for now, just use the provided URL/path directly
   const imageUploadHandler = async (image: File): Promise<string> => {
