@@ -49,7 +49,6 @@ impl PtySession {
             .map_err(|e| format!("Failed to spawn shell: {}", e))?;
 
         let child: Arc<Mutex<Box<dyn Child + Send>>> = Arc::new(Mutex::new(child));
-        let child_clone = Arc::clone(&child);
 
         // Get reader and writer
         let mut reader = pair.master.try_clone_reader().map_err(|e| format!("Failed to clone reader: {}", e))?;
@@ -61,16 +60,12 @@ impl PtySession {
         // This will also detect when the shell exits (EOF)
         thread::spawn(move || {
             let mut buffer = [0u8; 4096];
-            let mut exit_sent = false;
             
             loop {
                 match reader.read(&mut buffer) {
                     Ok(0) => {
                         // EOF - shell has exited
-                        if !exit_sent {
-                            let _ = app_handle.emit(&format!("terminal-exit-{}", terminal_id), ());
-                            exit_sent = true;
-                        }
+                        let _ = app_handle.emit(&format!("terminal-exit-{}", terminal_id), ());
                         break;
                     }
                     Ok(n) => {
@@ -80,10 +75,7 @@ impl PtySession {
                     }
                     Err(_) => {
                         // Error reading - shell has probably exited
-                        if !exit_sent {
-                            let _ = app_handle.emit(&format!("terminal-exit-{}", terminal_id), ());
-                            exit_sent = true;
-                        }
+                        let _ = app_handle.emit(&format!("terminal-exit-{}", terminal_id), ());
                         break;
                     }
                 }
