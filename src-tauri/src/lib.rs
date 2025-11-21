@@ -86,6 +86,12 @@ async fn read_directory(path: String, show_hidden: Option<bool>) -> Result<Vec<F
 }
 
 #[tauri::command]
+async fn path_exists(path: String) -> Result<bool, String> {
+    let path_buf = PathBuf::from(&path);
+    Ok(path_buf.exists())
+}
+
+#[tauri::command]
 async fn read_file_content(path: String) -> Result<String, String> {
     match fs::read_to_string(&path) {
         Ok(content) => Ok(content),
@@ -389,6 +395,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             read_directory,
+            path_exists,
             read_file_content,
             read_image_file,
             create_file,

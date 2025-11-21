@@ -4,9 +4,13 @@ import { invoke } from '@tauri-apps/api/core';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FolderIcon from '@mui/icons-material/Folder';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { FileTree } from './FileTree';
 import { FileEntry } from '../types';
 import { useTheme } from '../theme';
+import { useRecentFiles } from '../hooks/useRecentFiles';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -28,6 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
   const [refreshKey, setRefreshKey] = useState(0);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const { mode } = useTheme();
+  const { recentItems, isLoaded: recentLoaded, addRecentItem, clearRecentItems } = useRecentFiles();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -47,13 +52,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
     if (openFolderTrigger !== undefined && openFolderTrigger > 0) {
       handleOpenFolder();
     }
-  }, [openFolderTrigger]);
+  }, [openFolderTrigger, addRecentItem]);
 
   useEffect(() => {
     if (openFileTrigger !== undefined && openFileTrigger > 0) {
       handleOpenFile();
     }
-  }, [openFileTrigger]);
+  }, [openFileTrigger, addRecentItem]);
 
   const handleOpenFolder = async () => {
     try {
@@ -75,6 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
           is_directory: true,
           is_file: false,
         });
+        // Add to recent items
+        addRecentItem(selected, true);
         // Notify parent component
         if (onWorkspaceChange) {
           onWorkspaceChange(selected);
@@ -92,8 +99,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
         multiple: false,
       });
 
-      if (selected && typeof selected === 'string' && onFileClick) {
-        onFileClick(selected);
+      if (selected && typeof selected === 'string') {
+        // Add to recent items
+        addRecentItem(selected, false);
+        // Open file
+        if (onFileClick) {
+          onFileClick(selected);
+        }
       }
     } catch (error) {
       console.error('Failed to open file:', error);
@@ -118,6 +130,46 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleRecentItemClick = async (item: { path: string; isDirectory: boolean }) => {
+    try {
+      // Check if path exists
+      const exists = await invoke<boolean>('path_exists', { path: item.path });
+      
+      if (!exists) {
+        alert(`File or folder does not exist:\n${item.path}`);
+        return;
+      }
+
+      if (item.isDirectory) {
+        // Open folder
+        setRootPath(item.path);
+        const parts = item.path.split(/[/\\]/);
+        const name = parts[parts.length - 1] || 'Unknown';
+        setFolderName(name);
+        setSelectedEntry({
+          name,
+          path: item.path,
+          is_directory: true,
+          is_file: false,
+        });
+        // Add to recent items (update timestamp)
+        addRecentItem(item.path, true);
+        if (onWorkspaceChange) {
+          onWorkspaceChange(item.path);
+        }
+      } else {
+        // Open file
+        addRecentItem(item.path, false);
+        if (onFileClick) {
+          onFileClick(item.path);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to open recent item:', error);
+      alert(`Failed to open:\n${item.path}\n\nError: ${error}`);
+    }
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -184,6 +236,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ onFileClick, openFolderTrigger
             >
               Open File
             </button>
+            
+            {/* Recent Files Section */}
+            {recentLoaded && recentItems.length > 0 && (
+              <div className={`recent-files-section ${mode}`}>
+                <div className="recent-files-header">
+                  <span className="recent-files-title">Recent</span>
+                  <button
+                    className={`clear-recent-btn ${mode}`}
+                    onClick={clearRecentItems}
+                    title="Clear recent files"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </button>
+                </div>
+                <div className="recent-files-list">
+                  {recentItems.map((item) => (
+                    <div
+                      key={`${item.path}-${item.timestamp}`}
+                      className={`recent-file-item ${mode}`}
+                      onClick={() => handleRecentItemClick(item)}
+                      title={item.path}
+                    >
+                      {item.isDirectory ? (
+                        <FolderIcon fontSize="small" className="recent-file-icon" />
+                      ) : (
+                        <DescriptionIcon fontSize="small" className="recent-file-icon" />
+                      )}
+                      <span className="recent-file-name">{item.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

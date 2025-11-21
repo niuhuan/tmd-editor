@@ -2,8 +2,13 @@
 
 Tiny Markdown Editor. 
 
-A text editor like VSCode build via Tauri.
+Ligh text editor like VSCode build via Tauri.
+
+Suppor LSP.
 
 
 ![](images/main.png)
+
+
+![](images/lsp.png)
 

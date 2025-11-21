@@ -260,3 +260,115 @@
 .cancel-btn.dark:hover {
   background-color: #4f4f4f;
 }
+
+/* Recent Files Section */
+.recent-files-section {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.recent-files-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recent-files-header.light {
+  color: #616161;
+}
+
+.recent-files-header.dark {
+  color: #858585;
+}
+
+.recent-files-title {
+  flex: 1;
+}
+
+.clear-recent-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.clear-recent-btn.light {
+  color: #616161;
+}
+
+.clear-recent-btn.dark {
+  color: #858585;
+}
+
+.clear-recent-btn.light:hover {
+  background-color: #e0e0e0;
+  color: #333333;
+}
+
+.clear-recent-btn.dark:hover {
+  background-color: #2a2d2e;
+  color: #cccccc;
+}
+
+.recent-files-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-file-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.recent-file-item.light {
+  color: #333333;
+}
+
+.recent-file-item.dark {
+  color: #cccccc;
+}
+
+.recent-file-item.light:hover {
+  background-color: #e0e0e0;
+}
+
+.recent-file-item.dark:hover {
+  background-color: #2a2d2e;
+}
+
+.recent-file-icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.recent-file-item.light .recent-file-icon {
+  color: #616161;
+}
+
+.recent-file-item.dark .recent-file-icon {
+  color: #858585;
+}
+
+.recent-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
