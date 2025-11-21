@@ -490,3 +490,17 @@
   background: #4f4f4f;
 }
 
+/* Horizontal scrollbar for split preview (Y-axis already defined above) */
+.split-preview::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.split-preview.light::-webkit-scrollbar-corner {
+  background: #f3f3f3;
+}
+
+.split-preview.dark::-webkit-scrollbar-corner {
+  background: #252526;
+}
+

@@ -30,6 +30,7 @@ import { OpenFile } from '../types';
 import { useTheme } from '../theme';
 import { CodeMirrorEditor } from './CodeMirrorEditor';
 import './EditorPane.css';
+import '../codemirror-scrollbar.css';
 
 interface EditorPaneProps {
   file: OpenFile;

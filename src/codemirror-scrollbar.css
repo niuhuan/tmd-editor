@@ -1,0 +1,58 @@
+/* Custom scrollbar styling for CodeMirror editor - both x and y axis */
+
+/* Light theme scrollbars */
+.editor-pane.codemirror.light .cm-scroller::-webkit-scrollbar,
+.split-view.light .split-editor .cm-scroller::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.editor-pane.codemirror.light .cm-scroller::-webkit-scrollbar-track,
+.split-view.light .split-editor .cm-scroller::-webkit-scrollbar-track {
+  background: #f3f3f3;
+}
+
+.editor-pane.codemirror.light .cm-scroller::-webkit-scrollbar-thumb,
+.split-view.light .split-editor .cm-scroller::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 5px;
+}
+
+.editor-pane.codemirror.light .cm-scroller::-webkit-scrollbar-thumb:hover,
+.split-view.light .split-editor .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.editor-pane.codemirror.light .cm-scroller::-webkit-scrollbar-corner,
+.split-view.light .split-editor .cm-scroller::-webkit-scrollbar-corner {
+  background: #f3f3f3;
+}
+
+/* Dark theme scrollbars */
+.editor-pane.codemirror.dark .cm-scroller::-webkit-scrollbar,
+.split-view.dark .split-editor .cm-scroller::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.editor-pane.codemirror.dark .cm-scroller::-webkit-scrollbar-track,
+.split-view.dark .split-editor .cm-scroller::-webkit-scrollbar-track {
+  background: #252526;
+}
+
+.editor-pane.codemirror.dark .cm-scroller::-webkit-scrollbar-thumb,
+.split-view.dark .split-editor .cm-scroller::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+}
+
+.editor-pane.codemirror.dark .cm-scroller::-webkit-scrollbar-thumb:hover,
+.split-view.dark .split-editor .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: #4f4f4f;
+}
+
+.editor-pane.codemirror.dark .cm-scroller::-webkit-scrollbar-corner,
+.split-view.dark .split-editor .cm-scroller::-webkit-scrollbar-corner {
+  background: #252526;
+}
+
