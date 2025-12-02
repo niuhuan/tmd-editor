@@ -1,31 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { marked } from 'marked';
-import { 
-  MDXEditor, 
-  headingsPlugin, 
-  listsPlugin, 
-  quotePlugin, 
-  thematicBreakPlugin, 
-  markdownShortcutPlugin, 
-  linkPlugin, 
-  linkDialogPlugin, 
-  tablePlugin, 
-  codeBlockPlugin, 
-  codeMirrorPlugin,
-  imagePlugin,
-  toolbarPlugin,
-  UndoRedo,
-  BoldItalicUnderlineToggles,
-  BlockTypeSelect,
-  CreateLink,
-  InsertImage,
-  InsertTable,
-  InsertThematicBreak,
-  ListsToggle,
-  Separator,
-  InsertCodeBlock
-} from '@mdxeditor/editor';
-import '@mdxeditor/editor/style.css';
+import { invoke } from '@tauri-apps/api/core';
 import { OpenFile } from '../types';
 import { useTheme } from '../theme';
 import { CodeMirrorEditor } from './CodeMirrorEditor';
@@ -49,17 +24,205 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
     onContentChange(file.path, value);
   };
 
-  const handleMarkdownChange = (value: string) => {
-    onContentChange(file.path, value);
+  // Helper function to resolve relative path to absolute path
+  const resolveImagePath = (imagePath: string, markdownFilePath: string): string => {
+    // If it's already a data URL or HTTP(S) URL, return as is
+    if (imagePath.startsWith('data:') || imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+
+    // If it's a file:// URL, extract the path
+    if (imagePath.startsWith('file://')) {
+      return imagePath.slice(7); // Remove 'file://' prefix
+    }
+
+    // Get directory of markdown file
+    // Handle both Windows (\) and Unix (/) path separators
+    const markdownDir = markdownFilePath.replace(/[/\\][^/\\]*$/, '');
+    
+    // Normalize path separators to forward slashes for processing
+    const normalizedPath = imagePath.replace(/\\/g, '/');
+    const normalizedDir = markdownDir.replace(/\\/g, '/');
+    
+    // Check if the directory path is absolute (starts with / on Unix, or C:\ on Windows)
+    const isAbsoluteDir = normalizedDir.startsWith('/') || /^[A-Za-z]:/.test(normalizedDir);
+    
+    // Handle absolute paths (starts with / on Unix, or C:\ on Windows)
+    if (normalizedPath.match(/^[A-Za-z]:\/|^\/[^\/]/)) {
+      // Absolute path - return as is (but normalize separators)
+      return normalizedPath;
+    }
+    
+    // Handle relative paths
+    // Split into parts and resolve ..
+    const dirParts = normalizedDir.split('/').filter(p => p !== '');
+    const pathParts = normalizedPath.split('/');
+    const resolvedParts = [...dirParts];
+    
+    for (const part of pathParts) {
+      if (part === '..') {
+        if (resolvedParts.length > 0) {
+          resolvedParts.pop();
+        }
+      } else if (part !== '.' && part !== '') {
+        resolvedParts.push(part);
+      }
+    }
+    
+    // Reconstruct path with appropriate separator
+    // On Windows, if original path had backslashes, use them
+    const useBackslash = markdownFilePath.includes('\\');
+    const separator = useBackslash ? '\\' : '/';
+    const resolvedPath = resolvedParts.join(separator);
+    
+    // If the original directory was absolute, ensure the result starts with /
+    // For Unix paths, add leading / if it was absolute
+    if (isAbsoluteDir && !useBackslash && !resolvedPath.startsWith('/')) {
+      return '/' + resolvedPath;
+    }
+    
+    // For Windows absolute paths (C:\), preserve the drive letter
+    if (isAbsoluteDir && useBackslash && /^[A-Za-z]:/.test(markdownDir)) {
+      const driveMatch = markdownDir.match(/^([A-Za-z]:)/);
+      if (driveMatch && !resolvedPath.startsWith(driveMatch[1])) {
+        return driveMatch[1] + '\\' + resolvedPath;
+      }
+    }
+    
+    return resolvedPath;
   };
 
-  // Update preview HTML when content changes in split mode
-  useEffect(() => {
-    if (file.type === 'markdown' && file.markdownViewMode === 'split') {
-      const html = marked.parse(file.content);
-      setPreviewHtml(html as string);
+  // Helper function to get MIME type from file extension
+  const getMimeType = (path: string): string => {
+    const ext = path.toLowerCase().split('.').pop() || '';
+    const mimeTypes: Record<string, string> = {
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'bmp': 'image/bmp',
+      'webp': 'image/webp',
+      'svg': 'image/svg+xml',
+      'ico': 'image/x-icon',
+    };
+    return mimeTypes[ext] || 'image/png';
+  };
+
+  // Process markdown content to convert local image paths to base64 data URLs
+  const processMarkdownImages = async (markdownContent: string, markdownFilePath: string): Promise<string> => {
+    // Match markdown image syntax: ![alt](path) or ![alt](path "title")
+    const markdownImageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    
+    // Match HTML img tags: <img src="path" ...>
+    const htmlImageRegex = /<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi;
+
+    let processedContent = markdownContent;
+    
+    // Collect all image replacements to do
+    interface ImageReplacement {
+      original: string;
+      replacement: string;
     }
-  }, [file.content, file.type, file.markdownViewMode]);
+    
+    const replacements: ImageReplacement[] = [];
+    const imageLoadPromises: Promise<void>[] = [];
+
+    // Process markdown image syntax
+    let match;
+    while ((match = markdownImageRegex.exec(markdownContent)) !== null) {
+      const [fullMatch, alt, imagePath] = match;
+      const resolvedPath = resolveImagePath(imagePath.trim(), markdownFilePath);
+      
+      // Only process local file paths (not data URLs or HTTP URLs)
+      if (!resolvedPath.startsWith('data:') && !resolvedPath.startsWith('http://') && !resolvedPath.startsWith('https://')) {
+        const promise = (async () => {
+          try {
+            const base64 = await invoke<string>('read_image_file', { path: resolvedPath });
+            const mimeType = getMimeType(resolvedPath);
+            const dataUrl = `data:${mimeType};base64,${base64}`;
+            replacements.push({
+              original: fullMatch,
+              replacement: `![${alt}](${dataUrl})`
+            });
+          } catch (error) {
+            console.error(`Failed to load image: ${resolvedPath}`, error);
+            // Keep original path if loading fails
+          }
+        })();
+        imageLoadPromises.push(promise);
+      }
+    }
+
+    // Process HTML img tags
+    while ((match = htmlImageRegex.exec(markdownContent)) !== null) {
+      const imagePath = match[1];
+      const resolvedPath = resolveImagePath(imagePath.trim(), markdownFilePath);
+      
+      // Only process local file paths
+      if (!resolvedPath.startsWith('data:') && !resolvedPath.startsWith('http://') && !resolvedPath.startsWith('https://')) {
+        const promise = (async () => {
+          try {
+            const base64 = await invoke<string>('read_image_file', { path: resolvedPath });
+            const mimeType = getMimeType(resolvedPath);
+            const dataUrl = `data:${mimeType};base64,${base64}`;
+            // Replace only the src attribute value
+            const fullMatch = match[0];
+            const newMatch = fullMatch.replace(`src="${imagePath}"`, `src="${dataUrl}"`).replace(`src='${imagePath}'`, `src='${dataUrl}'`);
+            replacements.push({
+              original: fullMatch,
+              replacement: newMatch
+            });
+          } catch (error) {
+            console.error(`Failed to load image: ${resolvedPath}`, error);
+            // Keep original path if loading fails
+          }
+        })();
+        imageLoadPromises.push(promise);
+      }
+    }
+
+    // Wait for all images to be loaded
+    await Promise.all(imageLoadPromises);
+
+    // Apply all replacements
+    for (const { original, replacement } of replacements) {
+      processedContent = processedContent.replace(original, replacement);
+    }
+
+    return processedContent;
+  };
+
+  // Update preview HTML when content changes in split or rich mode
+  useEffect(() => {
+    if (file.type === 'markdown' && (file.markdownViewMode === 'split' || file.markdownViewMode === 'rich')) {
+      // Process images and then render markdown
+      processMarkdownImages(file.content, file.path).then((processedContent) => {
+        const html = marked.parse(processedContent);
+        setPreviewHtml(html as string);
+      }).catch((error) => {
+        console.error('Failed to process markdown images:', error);
+        // Fallback to rendering without image processing
+        const html = marked.parse(file.content);
+        setPreviewHtml(html as string);
+      });
+    }
+  }, [file.content, file.type, file.markdownViewMode, file.path]);
+
+  // Update preview HTML when content changes in split or rich mode
+  useEffect(() => {
+    if (file.type === 'markdown' && (file.markdownViewMode === 'split' || file.markdownViewMode === 'rich')) {
+      // Process images and then render markdown
+      processMarkdownImages(file.content, file.path).then((processedContent) => {
+        const html = marked.parse(processedContent);
+        setPreviewHtml(html as string);
+      }).catch((error) => {
+        console.error('Failed to process markdown images:', error);
+        // Fallback to rendering without image processing
+        const html = marked.parse(file.content);
+        setPreviewHtml(html as string);
+      });
+    }
+  }, [file.content, file.type, file.markdownViewMode, file.path]);
 
   // Setup scroll synchronization for split view
   useEffect(() => {
@@ -149,17 +312,6 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
     };
   }, [file.type, file.markdownViewMode, previewHtml]);
 
-  // Image upload handler - for now, just use the provided URL/path directly
-  const imageUploadHandler = async (image: File): Promise<string> => {
-    // For local files, we can use file:// protocol or data URL
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        resolve(e.target?.result as string);
-      };
-      reader.readAsDataURL(image);
-    });
-  };
 
   if (file.isUnsupported) {
     return (
@@ -248,49 +400,18 @@ const EditorPaneComponent: React.FC<EditorPaneProps> = ({ file, isActive, onCont
       );
     }
     
-    // Show rich editor
+    // Show rich editor as preview-only mode (using the same preview component as split mode)
     return (
-      <div className={`editor-pane markdown ${mode}`}>
-        <MDXEditor
-          markdown={file.content}
-          onChange={handleMarkdownChange}
-          contentEditableClassName="markdown-editor-content"
-          plugins={[
-            toolbarPlugin({
-              toolbarContents: () => (
-                <>
-                  <UndoRedo />
-                  <Separator />
-                  <BoldItalicUnderlineToggles />
-                  <Separator />
-                  <BlockTypeSelect />
-                  <Separator />
-                  <CreateLink />
-                  <InsertImage />
-                  <Separator />
-                  <ListsToggle />
-                  <Separator />
-                  <InsertTable />
-                  <Separator />
-                  <InsertCodeBlock />
-                  <Separator />
-                  <InsertThematicBreak />
-                </>
-              ),
-            }),
-            headingsPlugin(),
-            listsPlugin(),
-            quotePlugin(),
-            thematicBreakPlugin(),
-            markdownShortcutPlugin(),
-            linkPlugin(),
-            linkDialogPlugin(),
-            imagePlugin({ imageUploadHandler }),
-            tablePlugin(),
-            codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
-            codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', ts: 'TypeScript', py: 'Python', rs: 'Rust', go: 'Go' } }),
-          ]}
-        />
+      <div className={`editor-pane markdown-preview ${mode}`}>
+        <div 
+          ref={previewRef}
+          className={`markdown-preview-full ${mode}`}
+        >
+          <div 
+            className="markdown-preview-content"
+            dangerouslySetInnerHTML={{ __html: previewHtml }}
+          />
+        </div>
       </div>
     );
   }

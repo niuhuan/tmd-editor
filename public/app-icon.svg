@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="TMD Editor Icon">
+  <defs>
+    <!-- Modern gradient background -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#581c87"/>
+    </linearGradient>
+
+    <!-- Accent gradient for text -->
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Scaled content group: 85% size, centered with ~77px margin -->
+  <g transform="translate(77, 77) scale(0.85)">
+    <!-- Base Shape: macOS style rounded square -->
+    <rect x="0" y="0" width="1024" height="1024" rx="226" fill="url(#bg)"/>
+    
+    <!-- Mac Window Controls (Top) -->
+    <g transform="translate(120, 140)">
+      <circle cx="0" cy="0" r="28" fill="#ef4444"/>
+      <circle cx="80" cy="0" r="28" fill="#f59e0b"/>
+      <circle cx="160" cy="0" r="28" fill="#22c55e"/>
+    </g>
+
+    <!-- Code/Text Lines Area -->
+    <g transform="translate(120, 240)">
+      <!-- Inactive lines -->
+      <g stroke="#94a3b8" stroke-width="18" stroke-linecap="round" opacity="0.35">
+        <line x1="0" y1="0" x2="520" y2="0"/>
+        <line x1="0" y1="56" x2="420" y2="56"/>
+        <line x1="0" y1="112" x2="640" y2="112"/>
+        <line x1="0" y1="168" x2="460" y2="168"/>
+      </g>
+
+      <!-- Active line with highlight and cursor -->
+      <g transform="translate(0, 248)">
+        <rect x="-20" y="-26" width="760" height="52" rx="12" fill="#0b1220" opacity="0.55"/>
+        <line x1="0" y1="0" x2="320" y2="0" stroke="url(#accent)" stroke-width="18" stroke-linecap="round"/>
+        <rect x="340" y="-16" width="6" height="32" fill="#e2e8f0">
+          <animate attributeName="opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+
+      <!-- More lines below -->
+      <g transform="translate(0, 328)" stroke="#94a3b8" stroke-width="18" stroke-linecap="round" opacity="0.3">
+        <line x1="0" y1="0" x2="540" y2="0"/>
+        <line x1="0" y1="56" x2="380" y2="56"/>
+      </g>
+    </g>
+
+    <!-- Text/Logo Area -->
+    <g transform="translate(512, 690)" text-anchor="middle">
+      <!-- Background cutout to hide lines behind text -->
+      <rect x="-280" y="-160" width="560" height="300" rx="40" fill="url(#bg)"/>
+      
+      <!-- Main Text: TMD -->
+      <g transform="translate(0, -50)">
+        <text x="0" y="0" 
+              font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" 
+              font-weight="900" 
+              font-size="220" 
+              fill="url(#accent)" 
+              letter-spacing="6">TMD</text>
+      </g>
+
+      <!-- Subtitle: Editor -->
+      <g transform="translate(0, 50)">
+        <text x="0" y="0" 
+              font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" 
+              font-weight="600" 
+              font-size="72" 
+              fill="#cbd5e1" 
+              letter-spacing="10">EDITOR</text>
+      </g>
+    </g>
+
+    <!-- Redesigned Decorative Brackets -->
+    <g fill="none" stroke="url(#accent)" stroke-width="16" stroke-linecap="round" opacity="0.3">
+      <path d="M300 560 C 240 610, 240 710, 300 760"/>
+      <path d="M724 560 C 784 610, 784 710, 724 760"/>
+    </g>
+  </g>
+</svg>
